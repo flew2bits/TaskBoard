@@ -1,0 +1,12 @@
+﻿services:
+  taskboard:
+    image: taskboard
+    build:
+      context: .
+      dockerfile: TaskBoard/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Docker
+  postgres:
+    image: postgres:11
+    environment:
+      POSTGRES_PASSWORD: pgsql

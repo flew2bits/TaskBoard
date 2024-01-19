@@ -1,0 +1,27 @@
+@page
+@model TaskBoard.Pages.Archived
+
+@{
+}
+
+<h1>Task Archive</h1>
+
+<table class="table table-striped">
+    <thead>
+    <tr>
+        <th>Title</th>
+        <th>Priority</th>
+        <th>Assignees</th>
+    </tr>
+    </thead>
+    <tbody>
+@foreach (var archive in Model.Archives)
+{
+    <tr>
+        <td>@archive.Title</td>
+        <td>@archive.Priority</td>
+        <td>@(string.Join(", ", archive.Assignees))</td>
+    </tr>
+}
+</tbody>
+</table>

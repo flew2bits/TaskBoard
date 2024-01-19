@@ -1,0 +1,193 @@
+@page
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@using TaskBoard.Pages
+@using TaskBoard.Tasks
+@using TaskBoard.Tasks.Views
+@using Index = TaskBoard.Pages.Index
+@model Index
+@{
+    var taskLookup = Model.Tasks.OrderBy(t => t.Title).GroupBy(t => t.State).ToDictionary(t => t.Key, t => t.ToArray());
+
+    var actions = new Dictionary<TaskState, string[]>
+    {
+        [TaskState.New] = [ActionNames.Start, "!"+ActionNames.Delete],
+        [TaskState.InProgress] = [ActionNames.Pause, ActionNames.Complete, ActionNames.Cancel],
+        [TaskState.OnHold] = [ActionNames.Resume, ActionNames.Cancel],
+        [TaskState.Completed] = [ActionNames.Archive],
+        [TaskState.Canceled] = [ActionNames.Archive]
+    };
+    var light = false;
+
+    var states = new[] { TaskState.New, TaskState.InProgress, TaskState.OnHold, TaskState.Completed, TaskState.Canceled };
+}
+
+@section styles {
+    <style>
+        .note.replying { font-weight: bold; color: var(--bs-success); }
+        .note .responses { padding-left: 2rem; border-left: solid 1px var(--bs-dark-bg-subtle); }
+    </style>
+}
+
+@if (TempData["Message"] != null)
+{
+    <div class="alert">@TempData["Message"]</div>
+}
+<form method="post" asp-page-handler="CreateTask">
+    <div class="modal fade" id="CreateTaskModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Add Task</h3>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" class="form-control mb-2" placeholder="Task Title" name="title"/>
+                    <select class="form-select mb-2" name="priority">
+                        <option disabled="disabled" hidden="hidden" selected="selected">Select Priority</option>
+                        @foreach (var priority in Enum.GetNames<TaskPriority>())
+                        {
+                            <option value="@priority">@priority</option>
+                        }
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Create Task</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<form method="post" asp-page-handler="AddNote">
+    <input type="hidden" id="AddNoteTaskId" name="taskId" />
+    <div class="modal fade" id="notesModal">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Notes</h3>
+                    <button class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="notes">
+                        
+                    </div>
+                    <input type="hidden" name="inResponseTo" id="AddNoteInResponseTo" value="@Guid.Empty"/>
+                    <div class="input-group">
+                        <input type="text" class="form-control" name="note" placeholder="Type your note"/>
+                        <button type="submit" class="btn btn-primary"><i class="fa fa-paper-plane-top"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<div class="row" style="min-height: 100vh;">
+    <div class="col-2">
+        <h2>Task Board</h2>
+        <form method="post" asp-page-handler="AddUser" class="row g-3 mb-2">
+            <div class="col-auto">
+                <input class="form-control" type="text" name="userid" placeholder="User Id"/>
+            </div>
+            <div class="col-auto">
+                <input class="form-control" type="text" name="name" placeholder="Name"/>
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-primary" type="submit">Create User</button>
+            </div>
+        </form>
+    </div>
+    @foreach (var state in states)
+    {
+        light = !light;
+        
+        <div class="col-2 @(light?"bg-light":"bg-white")">
+            <div class="sticky-top d-flex @(light?"bg-light":"bg-white")">
+                <h4>@state.ToString()</h4>
+                @if (state == TaskState.New)
+                {
+                    <div class="ms-auto"><i class="fa fa-plus" role="button" data-bs-target="#CreateTaskModal" data-bs-toggle="modal"></i></div>
+                }
+            </div>
+            @foreach (var task in taskLookup.GetValueOrDefault(state, Array.Empty<TaskDetail>()))
+            {
+                <div class="card mb-2" >
+                    <div class="card-body" data-task-id="@task.Id">
+                        <h6 class="card-title" data-title="@task.Title"><i class="me-1 fa fa-pencil edit-title" role="button"></i>@task.Title </h6>
+                        <form method="post" asp-page-handler="RenameTask" class="edit-title-form d-none">
+                            <input type="hidden" name="taskId" value="@task.Id"/>
+                            <div class="input-group mb-2">
+                                <input type="text" name="title" value="@task.Title" class="form-control"/>
+                                <button type="submit" class="btn btn-success btn-sm"><i class="fa fa-check"></i></button>
+                                <button type="button" class="btn btn-danger btn-sm edit-title-close"><i class="fa fa-close"></i></button>
+                            </div>
+                        </form>
+                        @if (TempData.TryGetValue(Index.MessageIdForTask(task.Id), out var message))
+                        {
+                            <div class="card-text text-danger">@message</div>
+                        }
+                        <div class="mb-2 d-flex">
+                            <div style="--bs-btn-font-size: 0.5rem;">
+                                <form method="post" asp-page-handler="ChangePriority">
+                                    <input type="hidden" name="taskId" value="@task.Id"/>
+                                    <input name="priority" type="radio" class="btn-check" id="@($"{task.Id}-priority-low")" value="@TaskPriority.Low" checked="@(task.Priority == "Low")"/>
+                                    <label for="@($"{task.Id}-priority-low")" class="btn btn-outline-primary btn-sm">
+                                        <i class="fa fa-chevron-down"></i>
+                                    </label>
+                                    <input name="priority" type="radio" class="btn-check" id="@($"{task.Id}-priority-medium")" value="@TaskPriority.Medium" checked="@(task.Priority == "Medium")"/>
+                                    <label for="@($"{task.Id}-priority-medium")" class="btn btn-outline-success btn-sm">
+                                        <i class="fa fa-dash"></i>
+                                    </label>
+                                    <input name="priority" type="radio" class="btn-check" id="@($"{task.Id}-priority-high")" value="@TaskPriority.High" checked="@(task.Priority == "High")"/>
+                                    <label for="@($"{task.Id}-priority-high")" class="btn btn-outline-warning btn-sm">
+                                        <i class="fa fa-chevron-up"></i>
+                                    </label>
+                                    <input name="priority" type="radio" class="btn-check" id="@($"{task.Id}-priority-critical")" value="@TaskPriority.Critical" checked="@(task.Priority == "Critical")"/>
+                                    <label for="@($"{task.Id}-priority-critical")" class="btn btn-outline-danger btn-sm">
+                                        <i class="fa fa-circle-exclamation"></i>
+                                    </label>
+                                </form>
+                            </div>
+                            <div class="ms-auto">
+                                <i class="fa fa-notes" role="button" data-bs-toggle="modal" data-bs-target="#notesModal"></i>
+                            </div>
+                            </div>
+                        <form method="post" asp-page-handler="AssignTask">
+                            <input type="hidden" name="taskId" value="@task.Id"/>
+                            <div class="input-group mb-2">
+                                <select class="form-select" name="taskAssignee">
+                                    <option>Unassigned</option>
+                                    @foreach (var option in Model.Users)
+                                    {
+                                        <option value="@option.Id" selected="@(option.Id == task.AssigneeId)">@option.Name</option>
+                                    }
+                                </select>
+                                <button class="btn btn-sm btn-primary" type="submit">Assign</button>
+                            </div>
+                        </form>
+                        <form method="post" asp-page-handler="ChangeState">
+                        <input type="hidden" name="taskId" value="@task.Id"/>
+                            @foreach (var action in actions[state])
+                            {
+                                if (action[0] == '!')
+                                {
+                                    <input class="btn btn-danger" type="submit" name="action" value="@action[1..]"/>
+                                }
+                                else
+                                {
+                                    <input class="btn btn-primary" type="submit" name="action" value="@action"/>
+                                }
+                            }
+                        </form>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+</div>
+
+@section scripts {
+    <script src="~/js/index.js"></script>
+}
