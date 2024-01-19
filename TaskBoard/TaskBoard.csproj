@@ -23,4 +23,8 @@
       <PackageReference Include="WolverineFx.Marten" Version="1.14.0" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Users\Workflow\" />
+    </ItemGroup>
+
 </Project>
