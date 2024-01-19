@@ -60,4 +60,65 @@ $(() => {
         return node;
     }
     
+    let connection = new signalR.HubConnectionBuilder().withUrl("/taskHub").build();
+    
+    connection.on("ErrorMessage", (message) => toastr.error(message));t
+    
+    connection.on("StateChanged", (taskId, state) => {
+        let task = $(`[data-task-id="${taskId}"]`).parent();
+        task.remove();
+        let target = $(`[data-state="${state}"]`);
+        target.append(task);
+        
+        let actionsDiv = task.find(".task-actions");
+        actionsDiv.empty();
+        let actions = target.data('actions').split(',');
+        
+        for (let action of actions) {
+            let btnStyle = 'primary';
+            if (action[0] === '!') {
+                btnStyle = "danger";
+                action = action.slice(1);
+            } 
+            actionsDiv.append(`<a href="#" class="btn btn-${btnStyle} me-1" data-action="${action}">${action}</a>`)
+        }
+    })
+    
+    connection.on("Unassigned", taskId => {
+       let assignmentSelect = $(`[data-task-id="${taskId}"]`).find('select[name="taskAssignee"]');
+       assignmentSelect.val('00000000-0000-0000-0000-000000000000');
+    });
+    
+    connection.on("Reassigned", (taskId, userId) => {
+        let assignmentSelect = $(`[data-task-id="${taskId}"]`).find('select[name="taskAssignee"]');
+        assignmentSelect.val(userId);
+    });
+    
+    connection.start().finally();
+    
+    let $main = $('main');
+    
+    $main.on('click', '[data-action]', evt => {
+        let $target = $(evt.target);
+        let action = $target.data("action");
+        let taskId = $target.closest(".card-body").data('taskId');
+        connection.invoke("ChangeTaskState", action, taskId).finally();
+    })
+    
+    $main.on('focus', 'select[name="taskAssignee"]', evt => {
+        let $target = $(evt.target);
+        $target.data("old-value", $target.find(":checked").val());
+    })
+    
+    $main.on('change', 'select[name="taskAssignee"]', evt => {
+        let $target = $(evt.target);
+        let option = $target.find(":checked");
+        let userId = option.val();
+        let taskId = $target.closest('.card-body').data('taskId');
+        connection.invoke("ReassignTask", taskId, userId).then(data => {
+            if (!data) $target.val($target.data('old-value'));
+        });
+        evt.preventDefault();
+    })
+    
 })

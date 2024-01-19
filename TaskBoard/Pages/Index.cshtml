@@ -1,6 +1,5 @@
 @page
 @using Microsoft.AspNetCore.Mvc.TagHelpers
-@using Microsoft.CodeAnalysis.Options
 @using TaskBoard.Pages
 @using TaskBoard.Tasks
 @using TaskBoard.Tasks.Views
@@ -27,6 +26,7 @@
         .note.replying { font-weight: bold; color: var(--bs-success); }
         .note .responses { padding-left: 2rem; border-left: solid 1px var(--bs-dark-bg-subtle); }
     </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" integrity="sha512-vKMx8UnXk60zUwyUnUPM3HbQo8QfmNx7+ltw8Pm5zLusl1XIfwcxo8DbWCqMGKaWeNxWA8yrx5v3SaVpMvR3CA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 }
 
 @if (TempData["Message"] != null)
@@ -103,7 +103,7 @@
     {
         light = !light;
         
-        <div class="col-2 @(light?"bg-light":"bg-white")">
+        <div class="col-2 @(light?"bg-light":"bg-white")" data-state="@state" data-actions="@(string.Join(",", actions[state]))">
             <div class="sticky-top d-flex @(light?"bg-light":"bg-white")">
                 <h4>@state.ToString()</h4>
                 @if (state == TaskState.New)
@@ -154,12 +154,10 @@
                                 <i class="fa fa-notes" role="button" data-bs-toggle="modal" data-bs-target="#notesModal"></i>
                             </div>
                             </div>
-                        <form method="post" asp-page-handler="AssignTask">
                             <!-- @task.Assignee -->
                             <input type="hidden" name="taskId" value="@task.Id"/>
-                            <div class="input-group mb-2">
-                                <select class="form-select" name="taskAssignee">
-                                    <option>Unassigned</option>
+                                <select class="form-select mb-2" name="taskAssignee">
+                                    <option value="@Guid.Empty">Unassigned</option>
                                     @foreach (var option in Model.Users)
                                     {
                                         <option value="@option.Id" selected="@(option.Id == task.AssigneeId)">@option.Name</option>
@@ -169,23 +167,19 @@
                                         <option selected="selected" hidden="hidden" disabled="disabled">@task.Assignee</option>
                                     }
                                 </select>
-                                <button class="btn btn-sm btn-primary" type="submit">Assign</button>
-                            </div>
-                        </form>
-                        <form method="post" asp-page-handler="ChangeState">
-                        <input type="hidden" name="taskId" value="@task.Id"/>
-                            @foreach (var action in actions[state])
+                        <div class="task-actions">
+                        @foreach (var action in actions[state])
+                        {
+                            if (action[0] == '!')
                             {
-                                if (action[0] == '!')
-                                {
-                                    <input class="btn btn-danger" type="submit" name="action" value="@action[1..]"/>
-                                }
-                                else
-                                {
-                                    <input class="btn btn-primary" type="submit" name="action" value="@action"/>
-                                }
+                                <a class="btn btn-danger me-1" href="#" data-action="@action[1..]">@action[1..]</a>
                             }
-                        </form>
+                            else
+                            {
+                                <a class="btn btn-primary me-1" href="#" data-action="@action">@action</a>
+                            }
+                        }
+                        </div>
                     </div>
                 </div>
             }
@@ -195,5 +189,7 @@
 </div>
 
 @section scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js" integrity="sha512-VEd+nq25CkR676O+pLBnDW09R7VQX9Mdiij052gVCp5yVH3jGtH70Ho/UUv4mJDsEdTvqRCFZg0NKGiojGnUCw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js" integrity="sha512-7rhBJh1om/W5Ztx7WiYOR9h2wlSaTmPyQMoHFtbT/FVNIA12y6S6I8HY9mrBS1uJ3dSU/R3qaSAXsGYuRjMDxg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="~/js/index.js"></script>
 }

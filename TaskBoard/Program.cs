@@ -3,6 +3,7 @@ using Marten;
 using Marten.Events.Daemon.Resiliency;
 using Oakton;
 using TaskBoard.Tasks;
+using TaskBoard.Tasks.Hubs;
 using TaskBoard.Users;
 using Wolverine;
 using Wolverine.Http;
@@ -37,8 +38,13 @@ builder.Services
     .AddUsers()
     .AddTasks();
 
+builder.Services.AddSignalR();
+
 var app = builder.Build();
 app.UseStaticFiles();
+app.UseRouting();
 app.MapRazorPages();
 app.MapWolverineEndpoints();
+app.MapHub<TaskHub>("/taskHub");
+
 await app.RunOaktonCommands(args);

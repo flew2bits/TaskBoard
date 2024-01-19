@@ -16,6 +16,7 @@
     <ItemGroup>
       <PackageReference Include="Marten" Version="6.4.1" />
       <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="8.0.1" />
+      <PackageReference Include="Microsoft.AspNetCore.SignalR.Common" Version="8.0.1" />
       <PackageReference Include="Oakton" Version="6.1.0" />
       <PackageReference Include="WolverineFx" Version="1.14.0" />
       <PackageReference Include="WolverineFx.Http" Version="1.14.0" />

@@ -1,5 +1,4 @@
 using Marten.Events.Aggregation;
-using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace TaskBoard.Tasks.Views;
 
@@ -21,13 +20,16 @@ public class TaskNotesProjection : SingleStreamProjection<TaskNotes>
         notes with
         {
             Notes = AttachNoteToParent(notes.Notes, evt.InResponseTo, 
-                new SingleNote(evt.NoteId, evt.Text, Array.Empty<SingleNote>()))
+                new SingleNote(evt.NoteId, evt.Text, Array.Empty<SingleNote>())).AsArray()
         };
 
-    private static SingleNote[] AttachNoteToParent(SingleNote[] notes, Guid parentId, SingleNote child) =>
-        notes.Select(n => n with { Responses = 
-                n.NoteId == parentId 
-                    ? n.Responses.Append(child).ToArray()
-                    : AttachNoteToParent(n.Responses, parentId, child) })
-            .ToArray();
+    private static IEnumerable<SingleNote> AttachNoteToParent(IEnumerable<SingleNote> notes, Guid parentId,
+        SingleNote child) =>
+        notes.Select(n => n with
+        {
+            Responses =
+            n.NoteId == parentId
+                ? n.Responses.Append(child).ToArray()
+                : AttachNoteToParent(n.Responses, parentId, child).AsArray()
+        });
 }
