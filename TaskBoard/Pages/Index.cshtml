@@ -1,5 +1,6 @@
 @page
 @using Microsoft.AspNetCore.Mvc.TagHelpers
+@using Microsoft.CodeAnalysis.Options
 @using TaskBoard.Pages
 @using TaskBoard.Tasks
 @using TaskBoard.Tasks.Views
@@ -154,6 +155,7 @@
                             </div>
                             </div>
                         <form method="post" asp-page-handler="AssignTask">
+                            <!-- @task.Assignee -->
                             <input type="hidden" name="taskId" value="@task.Id"/>
                             <div class="input-group mb-2">
                                 <select class="form-select" name="taskAssignee">
@@ -161,6 +163,10 @@
                                     @foreach (var option in Model.Users)
                                     {
                                         <option value="@option.Id" selected="@(option.Id == task.AssigneeId)">@option.Name</option>
+                                    }
+                                    @if (Model.Users.All(u => u.Id != task.AssigneeId))
+                                    {
+                                        <option selected="selected" hidden="hidden" disabled="disabled">@task.Assignee</option>
                                     }
                                 </select>
                                 <button class="btn btn-sm btn-primary" type="submit">Assign</button>

@@ -6,5 +6,9 @@ public record UserDetail(Guid Id, string UserId, string Name);
 
 public class UserDetailProjection : SingleStreamProjection<UserDetail>
 {
+    public UserDetailProjection()
+    {
+        DeleteEvent<UserDeleted>();
+    }
     public static UserDetail Create(UserCreated evt) => new UserDetail(evt.Id, evt.UserId, evt.Name);
 }

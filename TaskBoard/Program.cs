@@ -12,7 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseWolverine(opt =>
 {
-    //opt.CodeGeneration.TypeLoadMode = TypeLoadMode.Auto;
+    opt.CodeGeneration.TypeLoadMode = TypeLoadMode.Auto;
 });
 builder.Host.ApplyOaktonExtensions();
 
