@@ -154,19 +154,17 @@
                                 <i class="fa fa-notes" role="button" data-bs-toggle="modal" data-bs-target="#notesModal"></i>
                             </div>
                             </div>
-                            <!-- @task.Assignee -->
-                            <input type="hidden" name="taskId" value="@task.Id"/>
-                                <select class="form-select mb-2" name="taskAssignee">
-                                    <option value="@Guid.Empty">Unassigned</option>
-                                    @foreach (var option in Model.Users)
-                                    {
-                                        <option value="@option.Id" selected="@(option.Id == task.AssigneeId)">@option.Name</option>
-                                    }
-                                    @if (Model.Users.All(u => u.Id != task.AssigneeId))
-                                    {
-                                        <option selected="selected" hidden="hidden" disabled="disabled">@task.Assignee</option>
-                                    }
-                                </select>
+                            <select class="form-select mb-2" name="taskAssignee">
+                                <option value="@Guid.Empty">Unassigned</option>
+                                @foreach (var option in Model.Users)
+                                {
+                                    <option value="@option.Id" selected="@(option.Id == task.AssigneeId)">@option.Name</option>
+                                }
+                                @if (Model.Users.All(u => u.Id != task.AssigneeId))
+                                {
+                                    <option selected="selected" hidden="hidden" disabled="disabled">@task.Assignee</option>
+                                }
+                            </select>
                         <div class="task-actions">
                         @foreach (var action in actions[state])
                         {
@@ -193,3 +191,59 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js" integrity="sha512-7rhBJh1om/W5Ztx7WiYOR9h2wlSaTmPyQMoHFtbT/FVNIA12y6S6I8HY9mrBS1uJ3dSU/R3qaSAXsGYuRjMDxg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="~/js/index.js"></script>
 }
+
+<template id="newTaskTemplate">
+    <div class="card mb-2" >
+    <div class="card-body" data-task-id="">
+        <h6 class="card-title" data-title=""><i class="me-1 fa fa-pencil edit-title" role="button"></i></h6>
+        <div class="input-group mb-2">
+            <input type="text" name="title" value="" class="form-control"/>
+            <button type="submit" class="btn btn-success btn-sm"><i class="fa fa-check"></i></button>
+            <button type="button" class="btn btn-danger btn-sm edit-title-close"><i class="fa fa-close"></i></button>
+        </div>
+        <div class="mb-2 d-flex">
+            <div style="--bs-btn-font-size: 0.5rem;">
+                <input id="priority-low" name="priority" type="radio" class="btn-check" value="@TaskPriority.Low" />
+                <label for="priority-low" class="btn btn-outline-primary btn-sm">
+                    <i class="fa fa-chevron-down"></i>
+                </label>
+                <input name="priority" type="radio" class="btn-check" id="priority-medium" value="@TaskPriority.Medium"/>
+                <label for="priority-medium" class="btn btn-outline-success btn-sm">
+                    <i class="fa fa-dash"></i>
+                </label>
+                <input name="priority" type="radio" class="btn-check" id="priority-high" value="@TaskPriority.High"/>
+                <label for="priority-high" class="btn btn-outline-warning btn-sm">
+                    <i class="fa fa-chevron-up"></i>
+                </label>
+                <input name="priority" type="radio" class="btn-check" id="priority-critical" value="@TaskPriority.Critical"/>
+                <label for="priority-critical" class="btn btn-outline-danger btn-sm">
+                    <i class="fa fa-circle-exclamation"></i>
+                </label>
+            </div>
+            <div class="ms-auto">
+                <i class="fa fa-notes" role="button" data-bs-toggle="modal" data-bs-target="#notesModal"></i>
+            </div>
+        </div>
+        <select class="form-select mb-2" name="taskAssignee">
+            <option value="@Guid.Empty">Unassigned</option>
+            @foreach (var option in Model.Users)
+            {
+                <option value="@option.Id" >@option.Name</option>
+            }
+        </select>
+        <div class="task-actions">
+            @foreach (var action in actions[TaskState.New])
+            {
+                if (action[0] == '!')
+                {
+                    <a class="btn btn-danger me-1" href="#" data-action="@action[1..]">@action[1..]</a>
+                }
+                else
+                {
+                    <a class="btn btn-primary me-1" href="#" data-action="@action">@action</a>
+                }
+            }
+        </div>
+    </div>
+    </div>
+</template>

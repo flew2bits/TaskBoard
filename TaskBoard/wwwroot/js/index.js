@@ -94,6 +94,13 @@ $(() => {
         assignmentSelect.val(userId);
     });
     
+    connection.on("TaskCreated", taskId => {
+        $.ajax({
+            url: `/api/${taskId}`,
+            method: "get"
+        }).then(data => console.dir(data));
+    })
+    
     connection.start().finally();
     
     let $main = $('main');

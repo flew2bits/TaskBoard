@@ -22,6 +22,8 @@ public interface ITaskHub
 
     Task Unassigned(Guid taskId);
     Task Reassigned(Guid taskId, Guid userId);
+
+    Task TaskCreated(Guid taskId);
 }
 
 public class TaskHub : Hub<ITaskHub>

@@ -8,4 +8,7 @@ public class GetNotesForTask
 {
     [WolverineGet("/api/{id}/notes")]
     public static TaskNotes GetNotes([Document] TaskNotes notes) => notes;
+
+    [WolverineGet("/api/{id}")]
+    public static TaskDetail GetTaskDetail([Document] TaskDetail task) => task;
 }

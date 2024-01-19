@@ -5,6 +5,9 @@ namespace TaskBoard.Tasks.EventHandlers;
 
 public static class StateChangeHandler
 {
+    public static async Task Handle(TaskStarted evt, IHubContext<TaskHub, ITaskHub> hub) =>
+        await hub.Clients.All.TaskCreated(evt.Id);
+    
     public static async Task Handle(WorkStarted evt, IHubContext<TaskHub, ITaskHub> hub)
     {
         await hub.Clients.All.StateChanged(evt.Id, "InProgress");
