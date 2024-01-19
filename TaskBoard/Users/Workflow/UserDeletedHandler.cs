@@ -5,10 +5,12 @@ using Wolverine;
 
 namespace TaskBoard.Users.Workflow;
 
-public static class UserDeletedHandler
+public static class UserDeletedXHandler
 {
-    public static IEnumerable<object> Handle(UserDeleted evt, IDocumentSession session)
+    public static async Task Handle(UserDeleted evt, IDocumentSession session, IMessageBus bus)
     {
+        var endpoint = bus.EndpointFor("ordered");
+        
         var interestingStates = new List<TaskState> { TaskState.New, TaskState.InProgress, TaskState.OnHold };
 
         var tasks = session.Query<TaskDetail>().ToList()
@@ -16,7 +18,8 @@ public static class UserDeletedHandler
 
         foreach (var task in tasks)
         {
-            yield return new DeleteAssignee(task.Id);
+            if (task.State == TaskState.InProgress) await endpoint.SendAsync(new PlaceTaskOnHold(task.Id));
+            await endpoint.SendAsync(new RemoveTaskAssignment(task.Id));
         }
     }
 }

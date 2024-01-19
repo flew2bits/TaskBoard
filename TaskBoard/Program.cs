@@ -12,7 +12,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseWolverine(opt =>
 {
-    opt.CodeGeneration.TypeLoadMode = TypeLoadMode.Auto;
+    opt.LocalQueue("ordered").ConfigureExecution(options =>
+    {
+        options.MaxDegreeOfParallelism = 1;
+        options.EnsureOrdered = true;
+    });
 });
 builder.Host.ApplyOaktonExtensions();
 
