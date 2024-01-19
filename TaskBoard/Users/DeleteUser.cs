@@ -23,7 +23,7 @@ public static class DeleteUserHandler
         var messages = new OutgoingMessages();
         if (user.IsDeleted) return (events, messages);
 
-        var orderedUri = new Uri("local://ordered");
+        var orderedUri = SpecialQueues.Ordered;
         
         events += new UserDeleted(cmd.UserAggregateId);
 
