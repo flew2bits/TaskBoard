@@ -14,4 +14,4 @@ public static class CompleteTaskHandler
     }
 }
 
-public record TaskCompleted(Guid Id): IStateChange;
+public record TaskCompleted(Guid TaskId): IStateChange;

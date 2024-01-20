@@ -14,7 +14,7 @@ public class TaskDetailProjection : SingleStreamProjection<TaskDetail>
         DeleteEvent<TaskArchived>();
     }
     
-    public static TaskDetail Create(TaskStarted evt) => new(evt.Id, evt.Title, evt.Priority.ToString(), TaskState.New, "Unassigned", null);
+    public static TaskDetail Create(TaskStarted evt) => new(evt.TaskId, evt.Title, evt.Priority.ToString(), TaskState.New, "Unassigned", null);
 
     public async Task<TaskDetail> Apply(TaskAssignedToUser @event, TaskDetail task, IQuerySession session)
     {

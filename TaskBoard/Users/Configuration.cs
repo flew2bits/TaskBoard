@@ -10,7 +10,7 @@ public static class Configuration
         services.ConfigureMarten(opt =>
         {
             opt.Projections.Add<UserDetailProjection>(ProjectionLifecycle.Inline);
-            //opt.Projections.Add<UserActiveTasksProjection>(ProjectionLifecycle.Async);
+            opt.Projections.Add<UserActiveTasksProjection>(ProjectionLifecycle.Async);
         });
 
 }

@@ -113,17 +113,14 @@
             </div>
             @foreach (var task in taskLookup.GetValueOrDefault(state, Array.Empty<TaskDetail>()))
             {
-                <div class="card mb-2" >
-                    <div class="card-body" data-task-id="@task.Id">
+                <div class="card mb-2" data-task-id="@task.Id">
+                    <div class="card-body">
                         <h6 class="card-title" data-title="@task.Title"><i class="me-1 fa fa-pencil edit-title" role="button"></i>@task.Title </h6>
-                        <form method="post" asp-page-handler="RenameTask" class="edit-title-form d-none">
-                            <input type="hidden" name="taskId" value="@task.Id"/>
-                            <div class="input-group mb-2">
+                            <div class="input-group mb-2 d-none">
                                 <input type="text" name="title" value="@task.Title" class="form-control"/>
                                 <button type="submit" class="btn btn-success btn-sm"><i class="fa fa-check"></i></button>
                                 <button type="button" class="btn btn-danger btn-sm edit-title-close"><i class="fa fa-close"></i></button>
                             </div>
-                        </form>
                         @if (TempData.TryGetValue(Index.MessageIdForTask(task.Id), out var message))
                         {
                             <div class="card-text text-danger">@message</div>
@@ -193,10 +190,10 @@
 }
 
 <template id="newTaskTemplate">
-    <div class="card mb-2" >
-    <div class="card-body" data-task-id="">
+    <div class="card mb-2" data-task-id="">
+    <div class="card-body">
         <h6 class="card-title" data-title=""><i class="me-1 fa fa-pencil edit-title" role="button"></i></h6>
-        <div class="input-group mb-2">
+        <div class="input-group mb-2 d-none">
             <input type="text" name="title" value="" class="form-control"/>
             <button type="submit" class="btn btn-success btn-sm"><i class="fa fa-check"></i></button>
             <button type="button" class="btn btn-danger btn-sm edit-title-close"><i class="fa fa-close"></i></button>

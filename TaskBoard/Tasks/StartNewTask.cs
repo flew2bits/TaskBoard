@@ -13,4 +13,4 @@ public static class StartNewTaskHandler
     }
 }
 
-public record TaskStarted(Guid Id, string Title, TaskPriority Priority);
+public record TaskStarted(Guid TaskId, string Title, TaskPriority Priority);

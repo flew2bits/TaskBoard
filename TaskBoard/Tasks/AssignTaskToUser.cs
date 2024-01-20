@@ -21,4 +21,4 @@ public static class AssignTaskToUserHandler
     }
 }
 
-public record TaskAssignedToUser(Guid Id, Guid UserId);
+public record TaskAssignedToUser(Guid TaskId, Guid UserId);

@@ -14,4 +14,4 @@ public static class CancelTaskHandler
     }
 }
 
-public record TaskCanceled(Guid Id): IStateChange;
+public record TaskCanceled(Guid TaskId): IStateChange;

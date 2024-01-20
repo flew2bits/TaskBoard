@@ -15,4 +15,4 @@ public static class RemoveTaskAssignmentHandler
     }
 }
 
-public record TaskUnassigned(Guid Id);
+public record TaskUnassigned(Guid TaskId);

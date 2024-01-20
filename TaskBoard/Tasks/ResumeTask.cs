@@ -16,4 +16,4 @@ public static class ResumeTaskHandler
     }
 }
 
-public record TaskResumed(Guid Id): IStateChange;
+public record TaskResumed(Guid TaskId): IStateChange;

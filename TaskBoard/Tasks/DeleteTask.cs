@@ -15,4 +15,4 @@ public static class DeleteTaskHandler
     }
 }
 
-public record TaskDeleted(Guid Id);
+public record TaskDeleted(Guid TaskId);

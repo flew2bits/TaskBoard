@@ -15,4 +15,4 @@ public static class StartWorkOnTaskHandler
     }
 }
 
-public record WorkStarted(Guid Id): IStateChange;
+public record WorkStarted(Guid TaskId): IStateChange;

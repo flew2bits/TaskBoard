@@ -14,4 +14,4 @@ public static class RespondToConversationHandler
     }
 }
 
-public record RespondedToNote(Guid Id, Guid NoteId, Guid InResponseTo, string Text);
+public record RespondedToNote(Guid TaskId, Guid NoteId, Guid InResponseTo, string Text);

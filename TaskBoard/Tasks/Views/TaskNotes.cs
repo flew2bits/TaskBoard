@@ -8,7 +8,7 @@ public record SingleNote(Guid NoteId, string Text, SingleNote[] Responses);
 
 public class TaskNotesProjection : SingleStreamProjection<TaskNotes>
 {
-    public static TaskNotes Create(TaskStarted evt) => new TaskNotes(evt.Id, Array.Empty<SingleNote>());
+    public static TaskNotes Create(TaskStarted evt) => new TaskNotes(evt.TaskId, Array.Empty<SingleNote>());
 
     public TaskNotes Apply(ConversationStarted evt, TaskNotes notes) =>
         notes with

@@ -14,4 +14,4 @@ public static class PlaceTaskOnHoldHandler
     }
 }
 
-public record TaskHeld(Guid Id): IStateChange;
+public record TaskHeld(Guid TaskId): IStateChange;

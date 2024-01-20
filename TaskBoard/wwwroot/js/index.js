@@ -60,12 +60,18 @@ $(() => {
         return node;
     }
     
-    let connection = new signalR.HubConnectionBuilder().withUrl("/taskHub").build();
+    let connection = 
+        new signalR.HubConnectionBuilder()
+            .withUrl("/taskHub")
+            .withAutomaticReconnect()
+            .build();
     
-    connection.on("ErrorMessage", (message) => toastr.error(message));t
+    connection.on("ErrorMessage", (message) => toastr.error(message));
+    
+    connection.on("RemoveTask", taskId => $(`[data-task-id="${taskId}"]`).remove());
     
     connection.on("StateChanged", (taskId, state) => {
-        let task = $(`[data-task-id="${taskId}"]`).parent();
+        let task = $(`[data-task-id="${taskId}"]`);
         task.remove();
         let target = $(`[data-state="${state}"]`);
         target.append(task);
@@ -98,7 +104,24 @@ $(() => {
         $.ajax({
             url: `/api/${taskId}`,
             method: "get"
-        }).then(data => console.dir(data));
+        }).then(data => {
+            console.dir(data);
+            let $template = $('#newTaskTemplate');
+            let clone = $($template.html());
+            clone.attr('data-task-id', taskId);
+            clone.find('.card-title').append(data.title);
+            clone.find('input[name="title"]').val(data.title);
+            clone.find(`#priority-${data.priority}`.toLowerCase()).prop("checked", true);
+            
+            for (let node of clone.find('input[name="priority"]')) {
+                $(node).attr("id", `${taskId}-${node.id}`);
+            }
+            for (let node of clone.find('label[for^="priority-"]')) {
+                $(node).attr("for", `${taskId}-${$(node).attr("for")}`);
+            }
+            
+            clone.appendTo("[data-state='New']")
+        });
     })
     
     connection.start().finally();
@@ -108,7 +131,7 @@ $(() => {
     $main.on('click', '[data-action]', evt => {
         let $target = $(evt.target);
         let action = $target.data("action");
-        let taskId = $target.closest(".card-body").data('taskId');
+        let taskId = $target.closest(".card").data('taskId');
         connection.invoke("ChangeTaskState", action, taskId).finally();
     })
     
@@ -121,7 +144,7 @@ $(() => {
         let $target = $(evt.target);
         let option = $target.find(":checked");
         let userId = option.val();
-        let taskId = $target.closest('.card-body').data('taskId');
+        let taskId = $target.closest('.card').data('taskId');
         connection.invoke("ReassignTask", taskId, userId).then(data => {
             if (!data) $target.val($target.data('old-value'));
         });

@@ -38,4 +38,4 @@ public static class DeleteUserHandler
     }
 }
 
-public record UserDeleted(Guid Id);
+public record UserDeleted(Guid UserId);

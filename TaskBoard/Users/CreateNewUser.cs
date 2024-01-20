@@ -10,7 +10,7 @@ public static class CreateNewUserHandler
 {
     public static async Task LoadAsync(CreateNewUser cmd, IDocumentSession session)
     {
-        if (await session.Query<UserDetail>().AnyAsync(u => u.UserId == cmd.UserId))
+        if (await session.Query<UserDetail>().AnyAsync(u => u.LoginId == cmd.UserId))
             throw new InvalidOperationException("User already exists");
     }
     
@@ -21,4 +21,4 @@ public static class CreateNewUserHandler
     }
 }
 
-public record UserCreated(Guid Id, string UserId, string Name);
+public record UserCreated(Guid UserId, string LoginId, string Name);

@@ -7,11 +7,11 @@ public static class AssignmentChangeHandler
 {
     public static async Task Handle(TaskUnassigned evt, IHubContext<TaskHub, ITaskHub> hub)
     {
-        await hub.Clients.All.Unassigned(evt.Id);
+        await hub.Clients.All.Unassigned(evt.TaskId);
     }
 
     public static async Task Handle(TaskAssignedToUser evt, IHubContext<TaskHub, ITaskHub> hub)
     {
-        await hub.Clients.All.Reassigned(evt.Id, evt.UserId);
+        await hub.Clients.All.Reassigned(evt.TaskId, evt.UserId);
     }
 }

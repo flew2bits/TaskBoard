@@ -11,4 +11,4 @@ public static class StartConversationHandler
         new(cmd.TaskAggregateId, Guid.NewGuid(), cmd.Note);
 }
 
-public record ConversationStarted(Guid Id, Guid NoteId, string Note);
+public record ConversationStarted(Guid TaskId, Guid NoteId, string Note);

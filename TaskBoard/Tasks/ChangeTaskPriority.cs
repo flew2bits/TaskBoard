@@ -15,4 +15,4 @@ public static class ChangeTaskPriorityHandler
     }
 }
 
-public record PriorityChanged(Guid Id, TaskPriority Priority);
+public record PriorityChanged(Guid TaskId, TaskPriority Priority);

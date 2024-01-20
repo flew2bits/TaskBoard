@@ -14,4 +14,4 @@ public static class ArchiveTaskHandler
     }
 }
 
-public record TaskArchived(Guid Id);
+public record TaskArchived(Guid TaskId);

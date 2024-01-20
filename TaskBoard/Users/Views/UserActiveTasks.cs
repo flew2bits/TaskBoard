@@ -19,15 +19,16 @@ file class TaskUnassignedGrouper : IAggregateGrouper<Guid>
 
             if (unassignedEvents.Length == 0) return;
 
-            var taskIds = unassignedEvents.Select(e => e.Data.Id).ToList();
+            var taskIds = unassignedEvents.Select(e => e.Data.TaskId).ToList();
 
-            var taskAssignedEvents = (await session.Events.QueryRawEventDataOnly<TaskAssignedToUser>()
-                .ToListAsync()).Where(t => taskIds.Contains(t.Id));
+            var taskAssignedEvents = await session.Events.QueryRawEventDataOnly<TaskAssignedToUser>()
+                .Where(t => taskIds.Contains(t.TaskId))
+                .ToListAsync().ConfigureAwait(false);
 
-            var mapping = taskAssignedEvents.GroupBy(t => t.Id).Select(t => t.Last())
-                .ToDictionary(t => t.Id, t => t.UserId);
+            var mapping = taskAssignedEvents.GroupBy(t => t.TaskId).Select(t => t.Last())
+                .ToDictionary(t => t.TaskId, t => t.UserId);
 
-            grouping.AddEvents<TaskUnassigned>(e => mapping[e.Id], unassignedEvents);
+            grouping.AddEvents<TaskUnassigned>(e => mapping[e.TaskId], unassignedEvents);
         }
         catch (Exception ex)
         {
@@ -49,15 +50,15 @@ file class TaskStateChangedGrouper : IAggregateGrouper<Guid>
 
             if (stateChangeEvents.Length == 0) return;
 
-            var taskIds = stateChangeEvents.Select(e => e.Data.Id).Distinct().ToList();
+            var taskIds = stateChangeEvents.Select(e => e.Data.TaskId).Distinct().ToList();
 
             var taskAssignedEvents = (await session.Events.QueryRawEventDataOnly<TaskAssignedToUser>().ToListAsync())
-                .Where(t => taskIds.Contains(t.Id))
-                .GroupBy(e => e.Id)
+                .Where(t => taskIds.Contains(t.TaskId))
+                .GroupBy(e => e.TaskId)
                 .Select(g => (g.Key, g.Last().UserId))
                 .ToDictionary(g => g.Key, v => v.UserId);
 
-            grouping.AddEvents<IStateChange>(e => taskAssignedEvents[e.Id], stateChangeEvents);
+            grouping.AddEvents<IStateChange>(e => taskAssignedEvents[e.TaskId], stateChangeEvents);
         }
         catch (Exception ex)
         {
@@ -77,15 +78,15 @@ file class TaskAssignedToUserGrouper: IAggregateGrouper<Guid>
 
             if (assignedEvents.Length == 0) return;
 
-            var taskIds = assignedEvents.Select(e => e.Data.Id).ToList();
+            var taskIds = assignedEvents.Select(e => e.Data.TaskId).ToList();
 
             var taskAssignedEvents = (await session.Events.QueryRawEventDataOnly<TaskAssignedToUser>()
-                .ToListAsync()).Where(t => taskIds.Contains(t.Id));
+                .ToListAsync()).Where(t => taskIds.Contains(t.TaskId));
 
-            var mapping = taskAssignedEvents.GroupBy(t => t.Id).Select(g => g.Reverse().Take(2))
-                .ToDictionary(t => t.First().Id, t => t.Select(u => u.UserId));
+            var mapping = taskAssignedEvents.GroupBy(t => t.TaskId).Select(g => g.Reverse().Take(2))
+                .ToDictionary(t => t.First().TaskId, t => t.Select(u => u.UserId));
 
-            grouping.AddEvents<TaskAssignedToUser>(e => mapping[e.Id], assignedEvents);
+            grouping.AddEvents<TaskAssignedToUser>(e => mapping[e.TaskId], assignedEvents);
         }
         catch (Exception ex)
         {
@@ -99,16 +100,18 @@ public class UserActiveTasksProjection : MultiStreamProjection<UserActiveTasks, 
 {
     public UserActiveTasksProjection()
     {
-        Identity<UserCreated>(u => u.Id);
+        Identity<UserCreated>(u => u.UserId);
         CustomGrouping(new TaskAssignedToUserGrouper());
         CustomGrouping(new TaskStateChangedGrouper());
         CustomGrouping(new TaskUnassignedGrouper());
+
+        DeleteEvent<UserDeleted>();
     }
 
     public static UserActiveTasks Create(UserCreated evt) =>
-        new(evt.Id, evt.Name, Array.Empty<Guid>(), Array.Empty<Guid>());
+        new(evt.UserId, evt.Name, Array.Empty<Guid>(), Array.Empty<Guid>());
 
-    public UserActiveTasks Apply(TaskUnassigned evt, UserActiveTasks view) => RemoveInternal(evt.Id, view);
+    public UserActiveTasks Apply(TaskUnassigned evt, UserActiveTasks view) => RemoveInternal(evt.TaskId, view);
 
     private static UserActiveTasks RemoveInternal(Guid id, UserActiveTasks view)
     {
@@ -129,19 +132,19 @@ public class UserActiveTasksProjection : MultiStreamProjection<UserActiveTasks, 
     
     public async Task<UserActiveTasks> Apply(TaskAssignedToUser evt, UserActiveTasks view, IQuerySession session)
     {
-        view = RemoveInternal(evt.Id, view);
+        view = RemoveInternal(evt.TaskId, view);
 
         try
         {
             if (evt.UserId != view.Id)
                 return view;
 
-            var task = await session.Events.AggregateStreamAsync<TaskAggregate>(evt.Id);
+            var task = await session.Events.AggregateStreamAsync<TaskAggregate>(evt.TaskId);
             if (task is null) return view;
             return task.State switch
             {
-                TaskState.InProgress => view with { InProgress = view.InProgress.Append(evt.Id).ToArray() },
-                TaskState.OnHold => view with { OnHold = view.OnHold.Append(evt.Id).ToArray() },
+                TaskState.InProgress => view with { InProgress = view.InProgress.Append(evt.TaskId).ToArray() },
+                TaskState.OnHold => view with { OnHold = view.OnHold.Append(evt.TaskId).ToArray() },
                 _ => view
             };
         }
@@ -156,11 +159,11 @@ public class UserActiveTasksProjection : MultiStreamProjection<UserActiveTasks, 
     {
         try
         {
-            view = RemoveInternal(evt.Id, view);
+            view = RemoveInternal(evt.TaskId, view);
             return evt switch
             {
-                WorkStarted => view with { InProgress = view.InProgress.Append(evt.Id).ToArray() },
-                TaskHeld => view with { OnHold = view.OnHold.Append(evt.Id).ToArray() },
+                WorkStarted or TaskResumed => view with { InProgress = view.InProgress.Append(evt.TaskId).ToArray() },
+                TaskHeld => view with { OnHold = view.OnHold.Append(evt.TaskId).ToArray() },
                 _ => view
             };
         }

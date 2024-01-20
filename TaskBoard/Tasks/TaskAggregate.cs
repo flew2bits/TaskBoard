@@ -3,7 +3,7 @@ namespace TaskBoard.Tasks;
 public record TaskNote(Guid NoteId, string Text);
 public record TaskAggregate(Guid Id, string Title, TaskPriority Priority, TaskState State, Guid? AssignedTo, TaskNote[] Notes)
 {
-    public static TaskAggregate Create(TaskStarted evt) => new(evt.Id, evt.Title, evt.Priority, TaskState.New, null, Array.Empty<TaskNote>());
+    public static TaskAggregate Create(TaskStarted evt) => new(evt.TaskId, evt.Title, evt.Priority, TaskState.New, null, Array.Empty<TaskNote>());
 
     public TaskAggregate Apply(TaskAssignedToUser evt) =>
         this with { AssignedTo = evt.UserId };

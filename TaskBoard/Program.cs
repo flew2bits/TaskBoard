@@ -13,11 +13,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseWolverine(opt =>
 {
-    opt.LocalQueue("ordered").ConfigureExecution(options =>
-    {
-        options.MaxDegreeOfParallelism = 1;
-        options.EnsureOrdered = true;
-    });
+    opt.LocalQueue("ordered").Sequential();
+    opt.Policies.UseDurableLocalQueues();
+    opt.Policies.UseDurableOutboxOnAllSendingEndpoints();
 });
 builder.Host.ApplyOaktonExtensions();
 

@@ -2,5 +2,5 @@ namespace TaskBoard.Tasks;
 
 public interface IStateChange
 {
-    Guid Id { get; }
+    Guid TaskId { get; }
 }

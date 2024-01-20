@@ -2,7 +2,7 @@ using Marten.Events.Aggregation;
 
 namespace TaskBoard.Users.Views;
 
-public record UserDetail(Guid Id, string UserId, string Name);
+public record UserDetail(Guid Id, string LoginId, string Name);
 
 public class UserDetailProjection : SingleStreamProjection<UserDetail>
 {
@@ -10,5 +10,5 @@ public class UserDetailProjection : SingleStreamProjection<UserDetail>
     {
         DeleteEvent<UserDeleted>();
     }
-    public static UserDetail Create(UserCreated evt) => new UserDetail(evt.Id, evt.UserId, evt.Name);
+    public static UserDetail Create(UserCreated evt) => new UserDetail(evt.UserId, evt.LoginId, evt.Name);
 }

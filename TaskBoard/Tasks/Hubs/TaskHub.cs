@@ -24,6 +24,8 @@ public interface ITaskHub
     Task Reassigned(Guid taskId, Guid userId);
 
     Task TaskCreated(Guid taskId);
+
+    Task RemoveTask(Guid taskId);
 }
 
 public class TaskHub : Hub<ITaskHub>
@@ -63,6 +65,30 @@ public class TaskHub : Hub<ITaskHub>
         }
 
         return true;
+    }
+
+    public async Task SetPriority(string taskIdVal, string priorityVal)
+    {
+        if (!Guid.TryParse(taskIdVal, out var taskId))
+        {
+            await Clients.Caller.ErrorMessage("The task id is invalid");
+            return;
+        }
+
+        if (Enum.TryParse<TaskPriority>(priorityVal, out var priority))
+        {
+            await Clients.Caller.ErrorMessage("The priority is invalid");
+            return;
+        }
+
+        try
+        {
+            await _bus.InvokeAsync(new ChangeTaskPriority(taskId, priority));
+        }
+        catch (InvalidOperationException ex)
+        {
+            await Clients.Caller.ErrorMessage(ex.Message);
+        }
     }
 
     public async Task ChangeTaskState(string action, string taskIdVal)
