@@ -114,7 +114,7 @@ $(() => {
             clone.find(`#priority-${data.priority}`.toLowerCase()).prop("checked", true);
             
             for (let node of clone.find('input[name="priority"]')) {
-                $(node).attr("id", `${taskId}-${node.id}`);
+                $(node).attr("id", `${taskId}-${node.id}`).attr("name", `${taskId}-priority`);
             }
             for (let node of clone.find('label[for^="priority-"]')) {
                 $(node).attr("for", `${taskId}-${$(node).attr("for")}`);
@@ -122,6 +122,10 @@ $(() => {
             
             clone.appendTo("[data-state='New']")
         });
+    })
+    
+    connection.on("UpdatePriority", (taskId, priority) => {
+        $(`#${taskId}-priority-${priority}`.toLowerCase()).prop("checked", true);
     })
     
     connection.start().finally();
@@ -149,6 +153,19 @@ $(() => {
             if (!data) $target.val($target.data('old-value'));
         });
         evt.preventDefault();
+    })
+    
+    $main.on('change', 'input[name$="-priority"]', evt => {
+        let $target = $(evt.target);
+        if (!$target.is(':checked')) return;
+        let options = $target.closest('.priority-options');
+        let priority = $target.val();
+        let taskId = $target.closest('.card').data('taskId');
+        connection.invoke("SetPriority", taskId, priority)
+            .catch(err => {
+                options.find(`input[value="${options.data("option")}`).prop('checked', true);
+            })
+            .then(_ => options.attr('data-option', priority))
     })
     
 })

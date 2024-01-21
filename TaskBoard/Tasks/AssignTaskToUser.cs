@@ -16,7 +16,8 @@ public static class AssignTaskToUserHandler
     {
         if (user is null) throw new InvalidOperationException("User does not exist");
         if (task.AssignedTo == user.Id) yield break;
-        if (task.State is not (TaskState.New or TaskState.InProgress or TaskState.OnHold)) yield break;
+        if (task.State is not (TaskState.New or TaskState.InProgress or TaskState.OnHold))
+            throw new InvalidOperationException("Assignment cannot be changed in current state");
         yield return new TaskAssignedToUser(cmd.TaskAggregateId, cmd.UserId);
     }
 }

@@ -36,7 +36,9 @@ builder.Services
     .AddUsers()
     .AddTasks();
 
-builder.Services.AddSignalR();
+builder.Services.AddSignalR(opt =>
+{
+});
 
 var app = builder.Build();
 app.UseStaticFiles();

@@ -10,7 +10,10 @@ public static class ChangeTaskPriorityHandler
     public static IEnumerable<object> Handle(ChangeTaskPriority cmd, TaskAggregate task)
     {
         if (task.Priority == cmd.Priority) yield break;
-        if (task.State is TaskState.Completed or TaskState.Canceled or TaskState.Archived) yield break;
+        if (task.State is TaskState.Completed or TaskState.Canceled or TaskState.Archived)
+        {
+            throw new InvalidOperationException("Can not change priority in current state");
+        }
         yield return new PriorityChanged(cmd.TaskAggregateId, cmd.Priority);
     }
 }

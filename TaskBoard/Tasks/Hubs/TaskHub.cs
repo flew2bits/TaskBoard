@@ -26,6 +26,8 @@ public interface ITaskHub
     Task TaskCreated(Guid taskId);
 
     Task RemoveTask(Guid taskId);
+
+    Task UpdatePriority(Guid taskId, string priority);
 }
 
 public class TaskHub : Hub<ITaskHub>
@@ -75,7 +77,7 @@ public class TaskHub : Hub<ITaskHub>
             return;
         }
 
-        if (Enum.TryParse<TaskPriority>(priorityVal, out var priority))
+        if (!Enum.TryParse<TaskPriority>(priorityVal, out var priority))
         {
             await Clients.Caller.ErrorMessage("The priority is invalid");
             return;
@@ -88,7 +90,10 @@ public class TaskHub : Hub<ITaskHub>
         catch (InvalidOperationException ex)
         {
             await Clients.Caller.ErrorMessage(ex.Message);
+            throw;
         }
+        
+
     }
 
     public async Task ChangeTaskState(string action, string taskIdVal)

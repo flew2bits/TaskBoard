@@ -1,3 +1,5 @@
+namespace TaskBoard.Tasks;
+
 public enum TaskPriority
 {
     Low,

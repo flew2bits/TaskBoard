@@ -126,26 +126,24 @@
                             <div class="card-text text-danger">@message</div>
                         }
                         <div class="mb-2 d-flex">
-                            <div style="--bs-btn-font-size: 0.5rem;">
-                                <form method="post" asp-page-handler="ChangePriority">
-                                    <input type="hidden" name="taskId" value="@task.Id"/>
-                                    <input name="priority" type="radio" class="btn-check" id="@($"{task.Id}-priority-low")" value="@TaskPriority.Low" checked="@(task.Priority == "Low")"/>
-                                    <label for="@($"{task.Id}-priority-low")" class="btn btn-outline-primary btn-sm">
-                                        <i class="fa fa-chevron-down"></i>
-                                    </label>
-                                    <input name="priority" type="radio" class="btn-check" id="@($"{task.Id}-priority-medium")" value="@TaskPriority.Medium" checked="@(task.Priority == "Medium")"/>
-                                    <label for="@($"{task.Id}-priority-medium")" class="btn btn-outline-success btn-sm">
-                                        <i class="fa fa-dash"></i>
-                                    </label>
-                                    <input name="priority" type="radio" class="btn-check" id="@($"{task.Id}-priority-high")" value="@TaskPriority.High" checked="@(task.Priority == "High")"/>
-                                    <label for="@($"{task.Id}-priority-high")" class="btn btn-outline-warning btn-sm">
-                                        <i class="fa fa-chevron-up"></i>
-                                    </label>
-                                    <input name="priority" type="radio" class="btn-check" id="@($"{task.Id}-priority-critical")" value="@TaskPriority.Critical" checked="@(task.Priority == "Critical")"/>
-                                    <label for="@($"{task.Id}-priority-critical")" class="btn btn-outline-danger btn-sm">
-                                        <i class="fa fa-circle-exclamation"></i>
-                                    </label>
-                                </form>
+                            <div class="priority-options" style="--bs-btn-font-size: 0.5rem;" data-option="@task.Priority">
+                                <input type="hidden" name="taskId" value="@task.Id"/>
+                                <input name="@task.Id-priority" type="radio" class="btn-check" id="@($"{task.Id}-priority-low")" value="@TaskPriority.Low" checked="@(task.Priority == "Low")"/>
+                                <label for="@($"{task.Id}-priority-low")" class="btn btn-outline-primary btn-sm">
+                                    <i class="fa fa-chevron-down"></i>
+                                </label>
+                                <input name="@task.Id-priority" type="radio" class="btn-check" id="@($"{task.Id}-priority-medium")" value="@TaskPriority.Medium" checked="@(task.Priority == "Medium")"/>
+                                <label for="@($"{task.Id}-priority-medium")" class="btn btn-outline-success btn-sm">
+                                    <i class="fa fa-dash"></i>
+                                </label>
+                                <input name="@task.Id-priority" type="radio" class="btn-check" id="@($"{task.Id}-priority-high")" value="@TaskPriority.High" checked="@(task.Priority == "High")"/>
+                                <label for="@($"{task.Id}-priority-high")" class="btn btn-outline-warning btn-sm">
+                                    <i class="fa fa-chevron-up"></i>
+                                </label>
+                                <input name="@task.Id-priority" type="radio" class="btn-check" id="@($"{task.Id}-priority-critical")" value="@TaskPriority.Critical" checked="@(task.Priority == "Critical")"/>
+                                <label for="@($"{task.Id}-priority-critical")" class="btn btn-outline-danger btn-sm">
+                                    <i class="fa fa-circle-exclamation"></i>
+                                </label>
                             </div>
                             <div class="ms-auto">
                                 <i class="fa fa-notes" role="button" data-bs-toggle="modal" data-bs-target="#notesModal"></i>
