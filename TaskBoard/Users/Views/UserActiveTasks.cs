@@ -1,6 +1,4 @@
 using Marten;
-using Marten.Events;
-using Marten.Events.Aggregation;
 using Marten.Events.Projections;
 using TaskBoard.Tasks;
 
@@ -10,52 +8,21 @@ public record UserActiveTasks(Guid Id, string Name, ActiveTaskDetail[] InProgres
 
 public record ActiveTaskDetail(Guid TaskId, string Title);
 
-file class TaskAssignedToUserGrouper : IAggregateGrouper<Guid>
-{
-    public async Task Group(IQuerySession session, IEnumerable<IEvent> events, ITenantSliceGroup<Guid> grouping)
-    {
-        try
-        {
-            var assignedEvents = events.OfType<IEvent<TaskAssignedToUser>>().ToArray();
-
-            if (assignedEvents.Length == 0) return;
-
-            var taskIds = assignedEvents.Select(e => e.Data.TaskId).ToList();
-
-            var taskAssignedEvents = (await session.Events.QueryAllRawEvents()
-                    .Where(e => e.EventTypeName == EventMappingExtensions.GetEventTypeName<TaskAssignedToUser>())
-                    .ToListAsync())
-                .Cast<IEvent<TaskAssignedToUser>>()
-                .Where(t => taskIds.Contains(t.Data.TaskId))
-                .GroupBy(t => t.Data.TaskId)
-                .ToDictionary(t => t.Key);
-
-            foreach (var evt in assignedEvents)
-            {
-                var previousId = taskAssignedEvents[evt.Data.TaskId].TakeWhile(e => e.Id != evt.Id).LastOrDefault()?.Data.UserId;
-                if (previousId is not null && previousId != evt.Data.UserId)
-                    grouping.AddEvent(previousId.Value, evt);
-                grouping.AddEvent(evt.Data.UserId, evt);
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.Message);
-            throw;
-        }
-    }
-}
-
 public class UserActiveTasksProjection : MultiStreamProjection<UserActiveTasks, Guid>
 {
     public UserActiveTasksProjection()
     {
         Identity<UserCreated>(u => u.UserId);
-        CustomGrouping(new TaskAssignedToUserGrouper());
 
+        // Identity gets new owner to add, MostRecent gets previous owner to remove
+        Identity<TaskAssignedToUser>(u => u.UserId);
+        CustomGrouping(new MostRecentEventIdentityGrouper<TaskAssignedToUser, TaskAssignedToUser>
+            (i => i.TaskId, a => a.TaskId, a => a.UserId));
+        
         CustomGrouping(
-            new MostRecentEventIdentityGrouper<IStateChange, TaskAssignedToUser>(i => i.TaskId, a => a.TaskId,
-                a => a.UserId));
+            new MostRecentEventIdentityGrouper<IStateChange, TaskAssignedToUser>
+                (i => i.TaskId, a => a.TaskId, a => a.UserId));
+        
         CustomGrouping(
             new MostRecentEventIdentityGrouper<TaskUnassigned, TaskAssignedToUser>(u => u.TaskId, a => a.TaskId,
                 a => a.UserId));
