@@ -8,67 +8,7 @@ namespace TaskBoard.Users.Views;
 
 public record UserActiveTasks(Guid Id, string Name, Guid[] InProgress, Guid[] OnHold);
 
-file class TaskUnassignedGrouper : IAggregateGrouper<Guid>
-{
-    public async Task Group(IQuerySession session, IEnumerable<IEvent> events, ITenantSliceGroup<Guid> grouping)
-    {
-        try
-        {
-
-            var unassignedEvents = events.OfType<IEvent<TaskUnassigned>>().ToArray();
-
-            if (unassignedEvents.Length == 0) return;
-
-            var taskIds = unassignedEvents.Select(e => e.Data.TaskId).ToList();
-
-            var taskAssignedEvents = await session.Events.QueryRawEventDataOnly<TaskAssignedToUser>()
-                .Where(t => taskIds.Contains(t.TaskId))
-                .ToListAsync().ConfigureAwait(false);
-
-            var mapping = taskAssignedEvents.GroupBy(t => t.TaskId).Select(t => t.Last())
-                .ToDictionary(t => t.TaskId, t => t.UserId);
-
-            grouping.AddEvents<TaskUnassigned>(e => mapping[e.TaskId], unassignedEvents);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.Message);
-            throw;
-        }
-    }
-}
-
-file class TaskStateChangedGrouper : IAggregateGrouper<Guid>
-{
-    public async Task Group(IQuerySession session, IEnumerable<IEvent> events, ITenantSliceGroup<Guid> grouping)
-    {
-        try
-        {
-            events = events as IEvent[] ?? events.ToArray();
-
-            var stateChangeEvents = events.OfType<IEvent<IStateChange>>().ToArray();
-
-            if (stateChangeEvents.Length == 0) return;
-
-            var taskIds = stateChangeEvents.Select(e => e.Data.TaskId).Distinct().ToList();
-
-            var taskAssignedEvents = (await session.Events.QueryRawEventDataOnly<TaskAssignedToUser>().ToListAsync())
-                .Where(t => taskIds.Contains(t.TaskId))
-                .GroupBy(e => e.TaskId)
-                .Select(g => (g.Key, g.Last().UserId))
-                .ToDictionary(g => g.Key, v => v.UserId);
-
-            grouping.AddEvents<IStateChange>(e => taskAssignedEvents[e.TaskId], stateChangeEvents);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.Message);
-            throw;
-        }
-    }
-}
-
-file class TaskAssignedToUserGrouper: IAggregateGrouper<Guid>
+file class TaskAssignedToUserGrouper : IAggregateGrouper<Guid>
 {
     public async Task Group(IQuerySession session, IEnumerable<IEvent> events, ITenantSliceGroup<Guid> grouping)
     {
@@ -80,13 +20,21 @@ file class TaskAssignedToUserGrouper: IAggregateGrouper<Guid>
 
             var taskIds = assignedEvents.Select(e => e.Data.TaskId).ToList();
 
-            var taskAssignedEvents = (await session.Events.QueryRawEventDataOnly<TaskAssignedToUser>()
-                .ToListAsync()).Where(t => taskIds.Contains(t.TaskId));
+            var taskAssignedEvents = (await session.Events.QueryAllRawEvents()
+                    .Where(e => e.EventTypeName == EventMappingExtensions.GetEventTypeName<TaskAssignedToUser>())
+                    .ToListAsync())
+                .Cast<IEvent<TaskAssignedToUser>>()
+                .Where(t => taskIds.Contains(t.Data.TaskId))
+                .GroupBy(t => t.Data.TaskId)
+                .ToDictionary(t => t.Key);
 
-            var mapping = taskAssignedEvents.GroupBy(t => t.TaskId).Select(g => g.Reverse().Take(2))
-                .ToDictionary(t => t.First().TaskId, t => t.Select(u => u.UserId));
-
-            grouping.AddEvents<TaskAssignedToUser>(e => mapping[e.TaskId], assignedEvents);
+            foreach (var evt in assignedEvents)
+            {
+                var previousId = taskAssignedEvents[evt.Data.TaskId].TakeWhile(e => e.Id != evt.Id).LastOrDefault()?.Data.UserId;
+                if (previousId is not null && previousId != evt.Data.UserId)
+                    grouping.AddEvent(previousId.Value, evt);
+                grouping.AddEvent(evt.Data.UserId, evt);
+            }
         }
         catch (Exception ex)
         {
@@ -102,14 +50,18 @@ public class UserActiveTasksProjection : MultiStreamProjection<UserActiveTasks, 
     {
         Identity<UserCreated>(u => u.UserId);
         CustomGrouping(new TaskAssignedToUserGrouper());
-        CustomGrouping(new TaskStateChangedGrouper());
-        CustomGrouping(new TaskUnassignedGrouper());
+
+        CustomGrouping(
+            new MostRecentEventIdentityGrouper<IStateChange, TaskAssignedToUser>(i => i.TaskId, a => a.TaskId,
+                a => a.UserId));
+        CustomGrouping(
+            new MostRecentEventIdentityGrouper<TaskUnassigned, TaskAssignedToUser>(u => u.TaskId, a => a.TaskId,
+                a => a.UserId));
 
         DeleteEvent<UserDeleted>();
     }
 
-    public static UserActiveTasks Create(UserCreated evt) =>
-        new(evt.UserId, evt.Name, Array.Empty<Guid>(), Array.Empty<Guid>());
+    public static UserActiveTasks Create(UserCreated evt) => new(evt.UserId, evt.Name, Array.Empty<Guid>(), Array.Empty<Guid>());
 
     public UserActiveTasks Apply(TaskUnassigned evt, UserActiveTasks view) => RemoveInternal(evt.TaskId, view);
 
@@ -129,7 +81,7 @@ public class UserActiveTasksProjection : MultiStreamProjection<UserActiveTasks, 
             throw;
         }
     }
-    
+
     public async Task<UserActiveTasks> Apply(TaskAssignedToUser evt, UserActiveTasks view, IQuerySession session)
     {
         view = RemoveInternal(evt.TaskId, view);
@@ -149,7 +101,8 @@ public class UserActiveTasksProjection : MultiStreamProjection<UserActiveTasks, 
             };
         }
         catch (Exception ex)
-        {            Console.WriteLine(ex.Message);
+        {
+            Console.WriteLine(ex.Message);
 
             throw;
         }
@@ -168,7 +121,8 @@ public class UserActiveTasksProjection : MultiStreamProjection<UserActiveTasks, 
             };
         }
         catch (Exception ex)
-        {            Console.WriteLine(ex.Message);
+        {
+            Console.WriteLine(ex.Message);
 
             throw;
         }

@@ -25,7 +25,7 @@ builder.Services.AddMarten(opt =>
     {
         opt.Connection(builder.Configuration.GetConnectionString("marten") ??
                        throw new InvalidOperationException("No connection string"));
-        //opt.GeneratedCodeMode = TypeLoadMode.Auto;
+        // opt.GeneratedCodeMode = TypeLoadMode.Auto;
     })
     .AddAsyncDaemon(DaemonMode.Solo)
     .UseLightweightSessions()
