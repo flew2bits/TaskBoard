@@ -5,13 +5,16 @@ $(() => {
     
     $('.edit-title').on('click', (evt) => {
         let $target = $(evt.target);
+        let card = $target.closest('card');
         let title = $target.closest('.card-title');
         let form = $target.closest('.card-body').find('.edit-title-form');
         
         form.removeClass('d-none');
-        form.find('[name="title"]').val(title.data("title"));
+        form.find('[name="title"]').val(card.data("title"));
         title.addClass('d-none');
     })
+    
+
     
     $('.edit-title-close').on('click', evt => {
         let $target =$(evt.target);
@@ -109,7 +112,8 @@ $(() => {
             let $template = $('#newTaskTemplate');
             let clone = $($template.html());
             clone.attr('data-task-id', taskId);
-            clone.find('.card-title').append(data.title);
+            close.attr('data-title', data.title);
+            clone.find('.card-title .title-text').text(data.title);
             clone.find('input[name="title"]').val(data.title);
             clone.find(`#priority-${data.priority}`.toLowerCase()).prop("checked", true);
             
@@ -126,6 +130,13 @@ $(() => {
     
     connection.on("UpdatePriority", (taskId, priority) => {
         $(`#${taskId}-priority-${priority}`.toLowerCase()).prop("checked", true);
+    })
+    
+    connection.on("Renamed", (taskId, title) => {
+        let card = $(`.card[data-task-id=${taskId}]`);
+        card.find('.title-text').text(title);
+        card.attr('data-title', title);
+        card.find('.edit-title-value').val(title);
     })
     
     connection.start().finally();
@@ -166,6 +177,24 @@ $(() => {
                 options.find(`input[value="${options.data("option")}`).prop('checked', true);
             })
             .then(_ => options.attr('data-option', priority))
+    })
+
+    $main.on('click', '.edit-title-save',evt => {
+        let $target = $(evt.target);
+        let card = $target.closest('.card');
+        let cardTitle = card.find('.card-title');
+        let newTitle = card.find('.edit-title-value').val();
+        let taskId = card.data('taskId');
+        connection.invoke("RenameTask", taskId, newTitle)
+            .then(_ => {
+                card.data("title", newTitle);
+                cardTitle.find('.title-text').text(newTitle);
+            })
+            .finally(_ => {
+                cardTitle.removeClass('d-none');
+                card.find('.edit-title-form').addClass('d-none');
+            });
+        
     })
     
 })

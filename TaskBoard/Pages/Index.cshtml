@@ -10,7 +10,7 @@
 
     var actions = new Dictionary<TaskState, string[]>
     {
-        [TaskState.New] = [ActionNames.Start, "!"+ActionNames.Delete],
+        [TaskState.New] = [ActionNames.Start, "!" + ActionNames.Delete],
         [TaskState.InProgress] = [ActionNames.Pause, ActionNames.Complete, ActionNames.Cancel],
         [TaskState.OnHold] = [ActionNames.Resume, ActionNames.Cancel],
         [TaskState.Completed] = [ActionNames.Archive],
@@ -26,7 +26,7 @@
         .note.replying { font-weight: bold; color: var(--bs-success); }
         .note .responses { padding-left: 2rem; border-left: solid 1px var(--bs-dark-bg-subtle); }
     </style>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" integrity="sha512-vKMx8UnXk60zUwyUnUPM3HbQo8QfmNx7+ltw8Pm5zLusl1XIfwcxo8DbWCqMGKaWeNxWA8yrx5v3SaVpMvR3CA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" integrity="sha512-vKMx8UnXk60zUwyUnUPM3HbQo8QfmNx7+ltw8Pm5zLusl1XIfwcxo8DbWCqMGKaWeNxWA8yrx5v3SaVpMvR3CA==" crossorigin="anonymous" referrerpolicy="no-referrer"/>
 }
 
 @if (TempData["Message"] != null)
@@ -61,7 +61,7 @@
 </form>
 
 <form method="post" asp-page-handler="AddNote">
-    <input type="hidden" id="AddNoteTaskId" name="taskId" />
+    <input type="hidden" id="AddNoteTaskId" name="taskId"/>
     <div class="modal fade" id="notesModal">
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
@@ -71,12 +71,14 @@
                 </div>
                 <div class="modal-body">
                     <div class="notes">
-                        
+
                     </div>
                     <input type="hidden" name="inResponseTo" id="AddNoteInResponseTo" value="@Guid.Empty"/>
                     <div class="input-group">
                         <input type="text" class="form-control" name="note" placeholder="Type your note"/>
-                        <button type="submit" class="btn btn-primary"><i class="fa fa-paper-plane-top"></i></button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa fa-paper-plane-top"></i>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -102,25 +104,34 @@
     @foreach (var state in states)
     {
         light = !light;
-        
-        <div class="col-2 @(light?"bg-light":"bg-white")" data-state="@state" data-actions="@(string.Join(",", actions[state]))">
-            <div class="sticky-top d-flex @(light?"bg-light":"bg-white")">
+
+        <div class="col-2 @(light ? "bg-light" : "bg-white")" data-state="@state" data-actions="@(string.Join(",", actions[state]))">
+            <div class="sticky-top d-flex @(light ? "bg-light" : "bg-white")">
                 <h4>@state.ToString()</h4>
                 @if (state == TaskState.New)
                 {
-                    <div class="ms-auto"><i class="fa fa-plus" role="button" data-bs-target="#CreateTaskModal" data-bs-toggle="modal"></i></div>
+                    <div class="ms-auto">
+                        <i class="fa fa-plus" role="button" data-bs-target="#CreateTaskModal" data-bs-toggle="modal"></i>
+                    </div>
                 }
             </div>
             @foreach (var task in taskLookup.GetValueOrDefault(state, Array.Empty<TaskDetail>()))
             {
-                <div class="card mb-2" data-task-id="@task.Id">
+                <div class="card mb-2" data-task-id="@task.Id" data-title="@task.Title">
                     <div class="card-body">
-                        <h6 class="card-title" data-title="@task.Title"><i class="me-1 fa fa-pencil edit-title" role="button"></i>@task.Title </h6>
-                            <div class="input-group mb-2 d-none">
-                                <input type="text" name="title" value="@task.Title" class="form-control"/>
-                                <button type="submit" class="btn btn-success btn-sm"><i class="fa fa-check"></i></button>
-                                <button type="button" class="btn btn-danger btn-sm edit-title-close"><i class="fa fa-close"></i></button>
-                            </div>
+                        <h6 class="card-title">
+                            <i class="me-1 fa fa-pencil edit-title" role="button"></i>
+                            <span class="title-text">@task.Title</span>
+                        </h6>
+                        <div class="edit-title-form input-group mb-2 d-none">
+                            <input type="text" value="@task.Title" class="form-control edit-title-value"/>
+                            <button type="button" class="btn btn-success btn-sm edit-title-save">
+                                <i class="fa fa-check"></i>
+                            </button>
+                            <button type="button" class="btn btn-danger btn-sm edit-title-close">
+                                <i class="fa fa-close"></i>
+                            </button>
+                        </div>
                         @if (TempData.TryGetValue(Index.MessageIdForTask(task.Id), out var message))
                         {
                             <div class="card-text text-danger">@message</div>
@@ -148,30 +159,30 @@
                             <div class="ms-auto">
                                 <i class="fa fa-notes" role="button" data-bs-toggle="modal" data-bs-target="#notesModal"></i>
                             </div>
-                            </div>
-                            <select class="form-select mb-2" name="taskAssignee">
-                                <option value="@Guid.Empty">Unassigned</option>
-                                @foreach (var option in Model.Users)
-                                {
-                                    <option value="@option.Id" selected="@(option.Id == task.AssigneeId)">@option.Name</option>
-                                }
-                                @if (Model.Users.All(u => u.Id != task.AssigneeId))
-                                {
-                                    <option selected="selected" hidden="hidden" disabled="disabled">@task.Assignee</option>
-                                }
-                            </select>
+                        </div>
+                        <select class="form-select mb-2" name="taskAssignee">
+                            <option value="@Guid.Empty">Unassigned</option>
+                            @foreach (var option in Model.Users)
+                            {
+                                <option value="@option.Id" selected="@(option.Id == task.AssigneeId)">@option.Name</option>
+                            }
+                            @if (Model.Users.All(u => u.Id != task.AssigneeId))
+                            {
+                                <option selected="selected" hidden="hidden" disabled="disabled">@task.Assignee</option>
+                            }
+                        </select>
                         <div class="task-actions">
-                        @foreach (var action in actions[state])
-                        {
-                            if (action[0] == '!')
+                            @foreach (var action in actions[state])
                             {
-                                <a class="btn btn-danger me-1" href="#" data-action="@action[1..]">@action[1..]</a>
+                                if (action[0] == '!')
+                                {
+                                    <a class="btn btn-danger me-1" href="#" data-action="@action[1..]">@action[1..]</a>
+                                }
+                                else
+                                {
+                                    <a class="btn btn-primary me-1" href="#" data-action="@action">@action</a>
+                                }
                             }
-                            else
-                            {
-                                <a class="btn btn-primary me-1" href="#" data-action="@action">@action</a>
-                            }
-                        }
                         </div>
                     </div>
                 </div>
@@ -189,56 +200,63 @@
 
 <template id="newTaskTemplate">
     <div class="card mb-2" data-task-id="">
-    <div class="card-body">
-        <h6 class="card-title" data-title=""><i class="me-1 fa fa-pencil edit-title" role="button"></i></h6>
-        <div class="input-group mb-2 d-none">
-            <input type="text" name="title" value="" class="form-control"/>
-            <button type="submit" class="btn btn-success btn-sm"><i class="fa fa-check"></i></button>
-            <button type="button" class="btn btn-danger btn-sm edit-title-close"><i class="fa fa-close"></i></button>
-        </div>
-        <div class="mb-2 d-flex">
-            <div style="--bs-btn-font-size: 0.5rem;">
-                <input id="priority-low" name="priority" type="radio" class="btn-check" value="@TaskPriority.Low" />
-                <label for="priority-low" class="btn btn-outline-primary btn-sm">
-                    <i class="fa fa-chevron-down"></i>
-                </label>
-                <input name="priority" type="radio" class="btn-check" id="priority-medium" value="@TaskPriority.Medium"/>
-                <label for="priority-medium" class="btn btn-outline-success btn-sm">
-                    <i class="fa fa-dash"></i>
-                </label>
-                <input name="priority" type="radio" class="btn-check" id="priority-high" value="@TaskPriority.High"/>
-                <label for="priority-high" class="btn btn-outline-warning btn-sm">
-                    <i class="fa fa-chevron-up"></i>
-                </label>
-                <input name="priority" type="radio" class="btn-check" id="priority-critical" value="@TaskPriority.Critical"/>
-                <label for="priority-critical" class="btn btn-outline-danger btn-sm">
-                    <i class="fa fa-circle-exclamation"></i>
-                </label>
+        <div class="card-body">
+            <h6 class="card-title" data-title="">
+                <i class="me-1 fa fa-pencil edit-title" role="button"></i>
+                <span class="title-text"></span>
+            </h6>
+            <div class="input-group mb-2 d-none">
+                <input type="text" name="title" value="" class="form-control"/>
+                <button type="submit" class="btn btn-success btn-sm">
+                    <i class="fa fa-check"></i>
+                </button>
+                <button type="button" class="btn btn-danger btn-sm edit-title-close">
+                    <i class="fa fa-close"></i>
+                </button>
             </div>
-            <div class="ms-auto">
-                <i class="fa fa-notes" role="button" data-bs-toggle="modal" data-bs-target="#notesModal"></i>
+            <div class="mb-2 d-flex">
+                <div style="--bs-btn-font-size: 0.5rem;">
+                    <input id="priority-low" name="priority" type="radio" class="btn-check" value="@TaskPriority.Low"/>
+                    <label for="priority-low" class="btn btn-outline-primary btn-sm">
+                        <i class="fa fa-chevron-down"></i>
+                    </label>
+                    <input name="priority" type="radio" class="btn-check" id="priority-medium" value="@TaskPriority.Medium"/>
+                    <label for="priority-medium" class="btn btn-outline-success btn-sm">
+                        <i class="fa fa-dash"></i>
+                    </label>
+                    <input name="priority" type="radio" class="btn-check" id="priority-high" value="@TaskPriority.High"/>
+                    <label for="priority-high" class="btn btn-outline-warning btn-sm">
+                        <i class="fa fa-chevron-up"></i>
+                    </label>
+                    <input name="priority" type="radio" class="btn-check" id="priority-critical" value="@TaskPriority.Critical"/>
+                    <label for="priority-critical" class="btn btn-outline-danger btn-sm">
+                        <i class="fa fa-circle-exclamation"></i>
+                    </label>
+                </div>
+                <div class="ms-auto">
+                    <i class="fa fa-notes" role="button" data-bs-toggle="modal" data-bs-target="#notesModal"></i>
+                </div>
+            </div>
+            <select class="form-select mb-2" name="taskAssignee">
+                <option value="@Guid.Empty">Unassigned</option>
+                @foreach (var option in Model.Users)
+                {
+                    <option value="@option.Id">@option.Name</option>
+                }
+            </select>
+            <div class="task-actions">
+                @foreach (var action in actions[TaskState.New])
+                {
+                    if (action[0] == '!')
+                    {
+                        <a class="btn btn-danger me-1" href="#" data-action="@action[1..]">@action[1..]</a>
+                    }
+                    else
+                    {
+                        <a class="btn btn-primary me-1" href="#" data-action="@action">@action</a>
+                    }
+                }
             </div>
         </div>
-        <select class="form-select mb-2" name="taskAssignee">
-            <option value="@Guid.Empty">Unassigned</option>
-            @foreach (var option in Model.Users)
-            {
-                <option value="@option.Id" >@option.Name</option>
-            }
-        </select>
-        <div class="task-actions">
-            @foreach (var action in actions[TaskState.New])
-            {
-                if (action[0] == '!')
-                {
-                    <a class="btn btn-danger me-1" href="#" data-action="@action[1..]">@action[1..]</a>
-                }
-                else
-                {
-                    <a class="btn btn-primary me-1" href="#" data-action="@action">@action</a>
-                }
-            }
-        </div>
-    </div>
     </div>
 </template>

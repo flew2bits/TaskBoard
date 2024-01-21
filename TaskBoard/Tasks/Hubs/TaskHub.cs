@@ -28,6 +28,8 @@ public interface ITaskHub
     Task RemoveTask(Guid taskId);
 
     Task UpdatePriority(Guid taskId, string priority);
+
+    Task Renamed(Guid taskId, string title);
 }
 
 public class TaskHub : Hub<ITaskHub>
@@ -37,6 +39,23 @@ public class TaskHub : Hub<ITaskHub>
     public TaskHub(IMessageBus bus)
     {
         _bus = bus;
+    }
+
+    public async Task RenameTask(string taskIdVal, string title)
+    {
+        if (!Guid.TryParse(taskIdVal, out var taskId))
+        {
+            await Clients.Caller.ErrorMessage("The task is is invalid");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            await Clients.Caller.ErrorMessage("The title must have a value");
+            return;
+        }
+
+        await _bus.InvokeAsync(new RenameTask(taskId, title));
     }
 
     public async Task<bool> ReassignTask(string taskIdVal, string userIdVal)
