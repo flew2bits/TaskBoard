@@ -37,7 +37,7 @@ public class MostRecentEventIdentityGrouper<TEvent, TPastEvent> : IAggregateGrou
                 .ToListAsync())
             .Cast<IEvent<TPastEvent>>()
             .Where(e => targetEventIds.Contains(PastEventJoinId(e.Data)))
-            .Select(e => (e.Sequence, e.Timestamp, e.Data))
+            .Select(e => (e.Sequence, e.Data))
             .GroupBy(p => PastEventJoinId(p.Data))
             .ToDictionary(p => p.Key);
 
