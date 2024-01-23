@@ -1,5 +1,6 @@
 using Marten;
 using Marten.Events.Aggregation;
+using TaskBoard.Users;
 using TaskBoard.Users.Views;
 
 namespace TaskBoard.Tasks.Views;
@@ -17,7 +18,7 @@ public class TaskArchiveProjection: SingleStreamProjection<TaskArchive>
             .Where(e => e is TaskAssignedToUser)
             .Cast<TaskAssignedToUser>()
             .Select(e => e.UserId);
-        var assignees = await session.LoadManyAsync<UserDetail>(assigneeIds);
-        return new TaskArchive(task.Id, task.Title, task.Priority, assignees.Select(a => a.Name).OrderBy(a => a).ToArray());
+        var assignees = assigneeIds.Select(e => session.Events.AggregateStream<UserAggregate>(e)).Where(a => a is not null);
+        return new TaskArchive(task.Id, task.Title, task.Priority, assignees.Select(a => a!.Name).OrderBy(a => a).ToArray());
     }
 }

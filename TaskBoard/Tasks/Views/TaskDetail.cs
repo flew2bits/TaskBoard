@@ -1,5 +1,6 @@
 using Marten;
 using Marten.Events.Aggregation;
+using TaskBoard.Users;
 using TaskBoard.Users.Views;
 
 namespace TaskBoard.Tasks.Views;
@@ -18,7 +19,7 @@ public class TaskDetailProjection : SingleStreamProjection<TaskDetail>
 
     public async Task<TaskDetail> Apply(TaskAssignedToUser @event, TaskDetail task, IQuerySession session)
     {
-        var user = await session.LoadAsync<UserDetail>(@event.UserId);
+        var user = await session.Events.AggregateStreamAsync<UserAggregate>(@event.UserId);
         return task with { Assignee = user!.Name, AssigneeId = user.Id };
     }
 

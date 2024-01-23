@@ -8,6 +8,11 @@ public record SingleNote(Guid NoteId, string Text, SingleNote[] Responses);
 
 public class TaskNotesProjection : SingleStreamProjection<TaskNotes>
 {
+    public TaskNotesProjection()
+    {
+        DeleteEvent<TaskDeleted>();
+        DeleteEvent<TaskArchived>();
+    }
     public static TaskNotes Create(TaskStarted evt) => new TaskNotes(evt.TaskId, Array.Empty<SingleNote>());
 
     public TaskNotes Apply(ConversationStarted evt, TaskNotes notes) =>

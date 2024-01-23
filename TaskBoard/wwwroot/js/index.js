@@ -129,7 +129,9 @@ $(() => {
     })
     
     connection.on("UpdatePriority", (taskId, priority) => {
-        $(`#${taskId}-priority-${priority}`.toLowerCase()).prop("checked", true);
+        let radio = $(`#${taskId}-priority-${priority}`.toLowerCase());
+        radio.prop("checked", true);
+        radio.closest('.priority-options').attr('data-option', priority);
     })
     
     connection.on("Renamed", (taskId, title) => {
@@ -166,7 +168,7 @@ $(() => {
         evt.preventDefault();
     })
     
-    $main.on('change', 'input[name$="-priority"]', evt => {
+    $main.on('click', 'input[name$="-priority"]', evt => {
         let $target = $(evt.target);
         if (!$target.is(':checked')) return;
         let options = $target.closest('.priority-options');
@@ -177,6 +179,7 @@ $(() => {
                 options.find(`input[value="${options.data("option")}`).prop('checked', true);
             })
             .then(_ => options.attr('data-option', priority))
+        evt.preventDefault();
     })
 
     $main.on('click', '.edit-title-save',evt => {

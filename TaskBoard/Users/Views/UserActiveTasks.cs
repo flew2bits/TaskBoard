@@ -16,18 +16,10 @@ public class UserActiveTasksProjection : MultiStreamProjection<UserActiveTasks, 
 
         // Identity gets new owner to add, MostRecent gets previous owner to remove
         Identity<TaskAssignedToUser>(u => u.UserId);
-        CustomGrouping(new MostRecentEventIdentityGrouper<TaskAssignedToUser, TaskAssignedToUser>
-            (i => i.TaskId, a => a.TaskId, a => a.UserId));
-        
-        CustomGrouping(
-            new MostRecentEventIdentityGrouper<IStateChange, TaskAssignedToUser>
-                (i => i.TaskId, a => a.TaskId, a => a.UserId));
-        
-        CustomGrouping(
-            new MostRecentEventIdentityGrouper<TaskUnassigned, TaskAssignedToUser>(u => u.TaskId, a => a.TaskId,
-                a => a.UserId));
-        CustomGrouping(
-            new MostRecentEventIdentityGrouper<TaskRenamed, TaskAssignedToUser>(u => u.TaskId, a => a.TaskId, a => a.UserId));
+        CustomGrouping(new MostRecentEventIdentityGrouper<TaskAssignedToUser, TaskAssignedToUser>(a => a.UserId));
+        CustomGrouping(new MostRecentEventIdentityGrouper<IStateChange, TaskAssignedToUser>(a => a.UserId));
+        CustomGrouping(new MostRecentEventIdentityGrouper<TaskUnassigned, TaskAssignedToUser>(a => a.UserId));
+        CustomGrouping(new MostRecentEventIdentityGrouper<TaskRenamed, TaskAssignedToUser>(a => a.UserId));
         
         Identity<UserDeleted>(e => e.UserId);
         DeleteEvent<UserDeleted>();
