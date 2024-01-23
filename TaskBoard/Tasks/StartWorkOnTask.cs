@@ -7,11 +7,13 @@ public record StartWorkOnTask(Guid TaskAggregateId);
 public static class StartWorkOnTaskHandler
 {
     [AggregateHandler]
-    public static IEnumerable<object> Handle(StartWorkOnTask cmd, TaskAggregate task)
+    public static (Events, CommandResult) Handle(StartWorkOnTask cmd, TaskAggregate task)
     {
-        if (task.State != TaskState.New) yield break;
-        if (task.AssignedTo is null) throw new InvalidOperationException("Can't start work without assignment");
-        yield return new WorkStarted(cmd.TaskAggregateId);
+        var events = new Events();
+        if (task.State != TaskState.New) return (events, CommandResult.OkResult);
+        if (task.AssignedTo is null) return (events, CommandResult.ErrorResult("Can't start work without assignment"));
+        events += new WorkStarted(cmd.TaskAggregateId);
+        return (events, CommandResult.OkResult);
     }
 }
 

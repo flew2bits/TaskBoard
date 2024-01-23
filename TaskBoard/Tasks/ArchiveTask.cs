@@ -7,10 +7,12 @@ public record ArchiveTask(Guid TaskAggregateId);
 public static class ArchiveTaskHandler
 {
     [AggregateHandler]
-    public static IEnumerable<object> Handle(ArchiveTask cmd, TaskAggregate task)
+    public static (Events, CommandResult) Handle(ArchiveTask cmd, TaskAggregate task)
     {
-        if (task.State is not (TaskState.Canceled or TaskState.Completed)) yield break;
-        yield return new TaskArchived(cmd.TaskAggregateId);
+        var events = new Events();
+        if (task.State is TaskState.Canceled or TaskState.Completed)
+            events += new TaskArchived(cmd.TaskAggregateId);
+        return (events, CommandResult.OkResult);
     }
 }
 

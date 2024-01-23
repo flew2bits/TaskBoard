@@ -7,12 +7,14 @@ public record ResumeTask(Guid TaskAggregateId);
 public static class ResumeTaskHandler
 {
     [AggregateHandler]
-    public static IEnumerable<object> Handle(ResumeTask cmd, TaskAggregate task)
+    public static (Events, CommandResult) Handle(ResumeTask cmd, TaskAggregate task)
     {
-        if (task.State != TaskState.OnHold) yield break;
+        var events = new Events();
+        if (task.State != TaskState.OnHold) return (events, CommandResult.OkResult);
         if (task.AssignedTo is null)
-            throw new InvalidOperationException("Cannot move task to in progress without assignment");
-        yield return new TaskResumed(cmd.TaskAggregateId);
+            return (events, CommandResult.ErrorResult("Cannot move task to in progress without assignment"));
+        events += new TaskResumed(cmd.TaskAggregateId);
+        return (events, CommandResult.OkResult);
     }
 }
 

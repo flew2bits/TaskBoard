@@ -7,10 +7,12 @@ public record RespondToConversation(Guid TaskAggregateId, Guid RespondingToNoteI
 public static class RespondToConversationHandler
 {
     [AggregateHandler]
-    public static IEnumerable<object> Handle(RespondToConversation cmd, TaskAggregate task)
+    public static (Events, CommandResult) Handle(RespondToConversation cmd, TaskAggregate task)
     {
-        if (task.Notes.All(t => t.NoteId != cmd.RespondingToNoteId)) yield break;
-        yield return new RespondedToNote(cmd.TaskAggregateId, Guid.NewGuid(), cmd.RespondingToNoteId, cmd.Text);
+        var events = new Events();
+        if (task.Notes.All(t => t.NoteId != cmd.RespondingToNoteId)) return (events, CommandResult.ErrorResult("Could not find note"));
+        events += new RespondedToNote(cmd.TaskAggregateId, Guid.NewGuid(), cmd.RespondingToNoteId, cmd.Text);
+        return (events, CommandResult.OkResult);
     }
 }
 

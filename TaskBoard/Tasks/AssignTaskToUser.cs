@@ -12,13 +12,15 @@ public static class AssignTaskToUserHandler
         => session.LoadAsync<UserDetail>(cmd.UserId);
 
     [AggregateHandler]
-    public static IEnumerable<object> Handle(AssignTaskToUser cmd, TaskAggregate task, UserDetail? user)
+    public static (Events, CommandResult) Handle(AssignTaskToUser cmd, TaskAggregate task, UserDetail? user)
     {
-        if (user is null) throw new InvalidOperationException("User does not exist");
-        if (task.AssignedTo == user.Id) yield break;
+        var events = new Events();
+        if (user is null) return (events, CommandResult.ErrorResult("User does not exists"));
+        if (task.AssignedTo == user.Id) return (events, CommandResult.OkResult);
         if (task.State is not (TaskState.New or TaskState.InProgress or TaskState.OnHold))
-            throw new InvalidOperationException("Assignment cannot be changed in current state");
-        yield return new TaskAssignedToUser(cmd.TaskAggregateId, cmd.UserId);
+            return(events, CommandResult.ErrorResult("Assignment cannot be changed in current state"));
+        events += new TaskAssignedToUser(cmd.TaskAggregateId, cmd.UserId);
+        return (events, CommandResult.OkResult);
     }
 }
 

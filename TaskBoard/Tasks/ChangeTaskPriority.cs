@@ -7,14 +7,14 @@ public record ChangeTaskPriority(Guid TaskAggregateId, TaskPriority Priority);
 public static class ChangeTaskPriorityHandler
 {
     [AggregateHandler]
-    public static IEnumerable<object> Handle(ChangeTaskPriority cmd, TaskAggregate task)
+    public static (Events, CommandResult) Handle(ChangeTaskPriority cmd, TaskAggregate task)
     {
-        if (task.Priority == cmd.Priority) yield break;
+        var events = new Events();
+        if (task.Priority == cmd.Priority) return (events, CommandResult.OkResult);
         if (task.State is TaskState.Completed or TaskState.Canceled or TaskState.Archived)
-        {
-            throw new InvalidOperationException("Can not change priority in current state");
-        }
-        yield return new PriorityChanged(cmd.TaskAggregateId, cmd.Priority);
+            return (events, CommandResult.ErrorResult("Can not change priority in current state"));
+        events +=  new PriorityChanged(cmd.TaskAggregateId, cmd.Priority);
+        return (events, CommandResult.OkResult);
     }
 }
 

@@ -7,8 +7,14 @@ public record StartConversation(Guid TaskAggregateId, string Note);
 public static class StartConversationHandler
 {
     [AggregateHandler]
-    public static ConversationStarted Handle(StartConversation cmd, TaskAggregate task) =>
-        new(cmd.TaskAggregateId, Guid.NewGuid(), cmd.Note);
+    public static (Events, CommandResult) Handle(StartConversation cmd, TaskAggregate task)
+    {
+        var events = new Events();
+        var noteId = Guid.NewGuid();
+        events += new ConversationStarted(cmd.TaskAggregateId, noteId, cmd.Note);
+        return (events, CommandResult.CreatedResult(noteId));
+    }
+        
 }
 
 public record ConversationStarted(Guid TaskId, Guid NoteId, string Note);

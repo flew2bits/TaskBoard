@@ -23,7 +23,7 @@ public static class ActionNames
 public class Index : PageModel
 {
     public static string MessageIdForTask(Guid taskId) => $"{taskId}_Message";
-    
+
     private readonly IMessageBus _bus;
 
     public Index(IMessageBus bus)
@@ -42,14 +42,9 @@ public class Index : PageModel
 
     public async Task<IActionResult> OnPostAddUser(string userid, string name)
     {
-        try
-        {
-            await _bus.InvokeAsync(new CreateNewUser(Guid.NewGuid(), userid, name));
-        }
-        catch (InvalidOperationException ex)
-        {
-            TempData["Message"] = ex.Message;
-        }
+        var result = await _bus.InvokeAsync<CommandResult>(new CreateNewUser(userid, name));
+        if (result is CommandResult.Error error)
+            TempData["Message"] = error.Message;
 
         return RedirectToPage();
     }
@@ -58,7 +53,7 @@ public class Index : PageModel
     {
         if (!Enum.IsDefined(priority)) return BadRequest("Invalid priority");
         if (string.IsNullOrWhiteSpace(title)) return BadRequest("You must provide a valid title");
-        await _bus.InvokeAsync(new StartNewTask(Guid.NewGuid(), title, priority));
+        await _bus.InvokeAsync(new StartNewTask(title, priority));
         return RedirectToPage();
     }
 
@@ -108,7 +103,7 @@ public class Index : PageModel
         {
             TempData[MessageIdForTask(taskId)] = ex.Message;
         }
-        
+
         return RedirectToPage();
     }
 

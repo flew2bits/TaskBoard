@@ -17,11 +17,11 @@ public static class DeleteUserHandler
     }
     
     [AggregateHandler]
-    public static (Events, OutgoingMessages) Handle(DeleteUser cmd, UserAggregate user, IEnumerable<TaskDetail> tasks)
+    public static (Events, OutgoingMessages, CommandResult) Handle(DeleteUser cmd, UserAggregate user, IEnumerable<TaskDetail> tasks)
     {
         var events = new Events();
         var messages = new OutgoingMessages();
-        if (user.IsDeleted) return (events, messages);
+        if (user.IsDeleted) return (events, messages, CommandResult.OkResult);
 
         var orderedUri = SpecialQueues.Ordered;
         
@@ -34,7 +34,7 @@ public static class DeleteUserHandler
             messages.Add(new RemoveTaskAssignment(task.Id).ToDestination(orderedUri));
         }
 
-        return (events, messages);
+        return (events, messages, CommandResult.OkResult);
     }
 }
 

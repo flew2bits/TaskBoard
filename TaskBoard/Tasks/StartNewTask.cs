@@ -2,14 +2,17 @@ using Wolverine.Marten;
 
 namespace TaskBoard.Tasks;
 
-public record StartNewTask(Guid TaskAggregateId, string Title, TaskPriority Priority);
+public record StartNewTask(string Title, TaskPriority Priority);
 
 public static class StartNewTaskHandler
 {
     [AggregateHandler(AggregateType = typeof(TaskAggregate))]
-    public static IEnumerable<object> Handle(StartNewTask cmd)
+    public static (Events, CommandResult) Handle(StartNewTask cmd)
     {
-        yield return new TaskStarted(cmd.TaskAggregateId, cmd.Title, cmd.Priority);
+        var events = new Events();
+        var id = Guid.NewGuid();
+        events += new TaskStarted(id, cmd.Title, cmd.Priority);
+        return (events, CommandResult.CreatedResult(id));
     }
 }
 

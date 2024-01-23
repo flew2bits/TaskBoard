@@ -7,10 +7,12 @@ public record PlaceTaskOnHold(Guid TaskAggregateId);
 public static class PlaceTaskOnHoldHandler
 {
     [AggregateHandler]
-    public static IEnumerable<object> Handle(PlaceTaskOnHold cmd, TaskAggregate task)
+    public static (Events, CommandResult) Handle(PlaceTaskOnHold cmd, TaskAggregate task)
     {
-        if (task.State != TaskState.InProgress) yield break;
-        yield return new TaskHeld(cmd.TaskAggregateId);
+        var events = new Events();
+        if (task.State is TaskState.InProgress)
+            events += new TaskHeld(cmd.TaskAggregateId);
+        return (events, CommandResult.OkResult);
     }
 }
 

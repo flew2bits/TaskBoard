@@ -7,11 +7,14 @@ public record RemoveTaskAssignment(Guid TaskAggregateId);
 public static class RemoveTaskAssignmentHandler
 {
     [AggregateHandler]
-    public static IEnumerable<object> Handle(RemoveTaskAssignment cmd, TaskAggregate task)
+    public static (Events, CommandResult) Handle(RemoveTaskAssignment cmd, TaskAggregate task)
     {
-        if (task.AssignedTo is null) yield break;
-        if (task.State != TaskState.New && task.State != TaskState.OnHold) throw new InvalidOperationException("Cannot remove assignment");
-        yield return new TaskUnassigned(cmd.TaskAggregateId);
+        var events = new Events();
+        if (task.AssignedTo is null) return (events, CommandResult.OkResult);
+        if (task.State is not (TaskState.New or TaskState.OnHold))
+            return (events, CommandResult.ErrorResult("Cannot remove assignment"));
+        events += new TaskUnassigned(cmd.TaskAggregateId);
+        return (events, CommandResult.OkResult);
     }
 }
 

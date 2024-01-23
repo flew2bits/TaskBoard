@@ -7,10 +7,12 @@ public record CompleteTask(Guid TaskAggregateId);
 public static class CompleteTaskHandler
 {
     [AggregateHandler]
-    public static IEnumerable<object> Handle(CompleteTask cmd, TaskAggregate task)
+    public static (Events, CommandResult) Handle(CompleteTask cmd, TaskAggregate task)
     {
-        if (task.State is not TaskState.InProgress) yield break;
-        yield return new TaskCompleted(cmd.TaskAggregateId);
+        var events = new Events();
+        if (task.State is not TaskState.InProgress) 
+            events += new TaskCompleted(cmd.TaskAggregateId);
+        return (events, CommandResult.OkResult);
     }
 }
 

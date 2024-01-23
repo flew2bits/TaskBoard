@@ -32,14 +32,9 @@ public interface ITaskHub
     Task Renamed(Guid taskId, string title);
 }
 
-public class TaskHub : Hub<ITaskHub>
+public class TaskHub(IMessageBus bus) : Hub<ITaskHub>
 {
-    private readonly IMessageBus _bus;
-
-    public TaskHub(IMessageBus bus)
-    {
-        _bus = bus;
-    }
+    private IMessageBus Bus { get; } = bus;
 
     public async Task RenameTask(string taskIdVal, string title)
     {
@@ -55,7 +50,9 @@ public class TaskHub : Hub<ITaskHub>
             return;
         }
 
-        await _bus.InvokeAsync(new RenameTask(taskId, title));
+        var result = await Bus.InvokeAsync<CommandResult>(new RenameTask(taskId, title));
+        if (result is CommandResult.Error error)
+            await Clients.Caller.ErrorMessage(error.Message);
     }
 
     public async Task<bool> ReassignTask(string taskIdVal, string userIdVal)
@@ -72,20 +69,15 @@ public class TaskHub : Hub<ITaskHub>
             return false;
         }
 
-        try
-        {
-            await _bus.InvokeAsync(
-                userId == Guid.Empty
-                    ? new RemoveTaskAssignment(taskId)
-                    : new AssignTaskToUser(taskId, userId));
-        }
-        catch (InvalidOperationException ex)
-        {
-            await Clients.Caller.ErrorMessage(ex.Message);
-            return false;
-        }
-
-        return true;
+        var result = await Bus.InvokeAsync<CommandResult>(
+            userId == Guid.Empty
+                ? new RemoveTaskAssignment(taskId)
+                : new AssignTaskToUser(taskId, userId));
+       
+        if (result is not CommandResult.Error error) return true;
+       
+        await Clients.Caller.ErrorMessage(error.Message);
+        return false;
     }
 
     public async Task SetPriority(string taskIdVal, string priorityVal)
@@ -102,17 +94,9 @@ public class TaskHub : Hub<ITaskHub>
             return;
         }
 
-        try
-        {
-            await _bus.InvokeAsync(new ChangeTaskPriority(taskId, priority));
-        }
-        catch (InvalidOperationException ex)
-        {
-            await Clients.Caller.ErrorMessage(ex.Message);
-            throw;
-        }
-        
-
+        var result = await Bus.InvokeAsync<CommandResult>(new ChangeTaskPriority(taskId, priority));
+        if (result is CommandResult.Error error)
+            await Clients.Caller.ErrorMessage(error.Message);
     }
 
     public async Task ChangeTaskState(string action, string taskIdVal)
@@ -141,13 +125,8 @@ public class TaskHub : Hub<ITaskHub>
             return;
         }
 
-        try
-        {
-            await _bus.InvokeAsync(command);
-        }
-        catch (InvalidOperationException ex)
-        {
-            await Clients.Caller.ErrorMessage(ex.Message);
-        }
+        var result = await Bus.InvokeAsync<CommandResult>(command);
+        if (result is CommandResult.Error error)
+            await Clients.Caller.ErrorMessage(error.Message);
     }
 }

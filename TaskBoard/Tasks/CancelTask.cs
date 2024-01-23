@@ -7,10 +7,12 @@ public record CancelTask(Guid TaskAggregateId);
 public static class CancelTaskHandler
 {
     [AggregateHandler]
-    public static IEnumerable<object> Handle(CancelTask cmd, TaskAggregate task)
+    public static (Events, CommandResult) Handle(CancelTask cmd, TaskAggregate task)
     {
-        if (task.State is not (TaskState.InProgress or TaskState.OnHold)) yield break;
-        yield return new TaskCanceled(cmd.TaskAggregateId);
+        var events = new Events();
+        if (task.State is TaskState.InProgress or TaskState.OnHold) 
+         events += new TaskCanceled(cmd.TaskAggregateId);
+        return (events, CommandResult.OkResult);
     }
 }
 
